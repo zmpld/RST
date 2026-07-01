@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RelationshipVisualizer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c249d16c26cf89244e175bb24ee4973b67096bfb")]
 [assembly: System.Reflection.AssemblyProductAttribute("RelationshipVisualizer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RelationshipVisualizer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

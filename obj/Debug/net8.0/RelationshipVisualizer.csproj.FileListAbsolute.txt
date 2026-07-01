@@ -132,3 +132,4 @@ C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\refint\RelationshipVi
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.pdb
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.genruntimeconfig.cache
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\ref\RelationshipVisualizer.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.sourcelink.json

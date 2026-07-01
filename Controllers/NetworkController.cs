@@ -3,15 +3,22 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 using System.Text.Json;
 
+using System.Text.Json.Serialization;
+
+public class VisualizeRequest 
+{ 
+    [JsonPropertyName("SelectedIds")]
+    public List<int> SelectedIds { get; set; } = new(); 
+}
+
 namespace RelationshipVisualizer.Controllers
 {
     public class LookupRequest { public string Keyword { get; set; } = string.Empty; }
     public class VisualizeRequest { public List<int> SelectedIds { get; set; } = new(); }
-
     public class Node { public string Id { get; set; } = ""; public string Label { get; set; } = ""; public string Group { get; set; } = ""; public string Title { get; set; } = ""; public object CustomData { get; set; } = new(); }
     public class Edge { public string From { get; set; } = ""; public string To { get; set; } = ""; public string Label { get; set; } = ""; public string Title { get; set; } = ""; }
     public class GraphData { public List<Node> Nodes { get; set; } = new(); public List<Edge> Edges { get; set; } = new(); }
-
+    
     public class CustomerLookupDto
     {
         public int Id { get; set; }
@@ -46,10 +53,9 @@ namespace RelationshipVisualizer.Controllers
     public class NetworkController : ControllerBase
     {
         private readonly string _connectionString;
-
         public NetworkController(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") 
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new ArgumentNullException(nameof(configuration));
         }
 
@@ -61,48 +67,44 @@ namespace RelationshipVisualizer.Controllers
             {
                 return BadRequest(new { message = "Search term cannot be empty." });
             }
-
             var cleanKeyword = request.Keyword.Trim();
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
-
             var query = @"
                 SELECT TOP 50
-                    c.CustomerId AS Id,
-                    ISNULL(c.CustomerFirstName, '') AS FirstName,
-                    ISNULL(c.CustomerMiddleName, '') AS MiddleName,
-                    ISNULL(c.CustomerLastName, '') AS LastName,
-                    ISNULL(c.CorporateName, '') AS CorporateName,
-                    c.CustomerRisk AS RiskRating,
-                    c.WATCHLIST_STATUS AS WatchlistStatus,
-                    c.IsPep AS IsPep,
-                    CASE 
-                        WHEN c.CorporateName LIKE '%' + @Keyword + '%' THEN 'Corporate Name Match'
-                        WHEN (c.CustomerFirstName + ' ' + c.CustomerLastName) LIKE '%' + @Keyword + '%' THEN 'Primary Name Alignment'
-                        WHEN (c.FatherFirstName + ' ' + c.FatherLastName) LIKE '%' + @Keyword + '%' THEN 'Father Name Vector Match (' + ISNULL(c.FatherFirstName,'') + ' ' + ISNULL(c.FatherLastName,'') + ')'
-                        WHEN (c.MotherFirstName + ' ' + c.MotherLastName) LIKE '%' + @Keyword + '%' THEN 'Mother Name Vector Match (' + ISNULL(c.MotherFirstName,'') + ' ' + ISNULL(c.MotherLastName,'') + ')'
-                        ELSE 'Fuzzy Substring Match'
-                    END AS MatchReason
+                c.CustomerId AS Id,
+                ISNULL(c.CustomerFirstName, '') AS FirstName,
+                ISNULL(c.CustomerMiddleName, '') AS MiddleName,
+                ISNULL(c.CustomerLastName, '') AS LastName,
+                ISNULL(c.CorporateName, '') AS CorporateName,
+                c.CustomerRisk AS RiskRating,
+                c.WATCHLIST_STATUS AS WatchlistStatus,
+                c.IsPep AS IsPep,
+                CASE
+                WHEN c.CorporateName LIKE '%' + @Keyword + '%' THEN 'Corporate Name Match'
+                WHEN (c.CustomerFirstName + ' ' + c.CustomerLastName) LIKE '%' + @Keyword + '%' THEN 'Primary Name Alignment'
+                WHEN (c.FatherFirstName + ' ' + c.FatherLastName) LIKE '%' + @Keyword + '%' THEN 'Father Name Vector Match (' + ISNULL(c.FatherFirstName,'') + ' ' + ISNULL(c.FatherLastName,'') + ')'
+                WHEN (c.MotherFirstName + ' ' + c.MotherLastName) LIKE '%' + @Keyword + '%' THEN 'Mother Name Vector Match (' + ISNULL(c.MotherFirstName,'') + ' ' + ISNULL(c.MotherLastName,'') + ')'
+                ELSE 'Fuzzy Substring Match'
+                END AS MatchReason
                 FROM Customers c
                 WHERE c.IsActive = 1 AND (
-                    c.CustomerFirstName LIKE '%' + @Keyword + '%'
-                    OR c.CustomerLastName LIKE '%' + @Keyword + '%'
-                    OR c.CorporateName LIKE '%' + @Keyword + '%'
-                    OR c.FatherFirstName LIKE '%' + @Keyword + '%'
-                    OR c.FatherLastName LIKE '%' + @Keyword + '%'
-                    OR c.MotherFirstName LIKE '%' + @Keyword + '%'
-                    OR c.MotherLastName LIKE '%' + @Keyword + '%'
-                    OR SOUNDEX(c.CustomerLastName) = SOUNDEX(@Keyword)
+                c.CustomerFirstName LIKE '%' + @Keyword + '%'
+                OR c.CustomerLastName LIKE '%' + @Keyword + '%'
+                OR c.CorporateName LIKE '%' + @Keyword + '%'
+                OR c.FatherFirstName LIKE '%' + @Keyword + '%'
+                OR c.FatherLastName LIKE '%' + @Keyword + '%'
+                OR c.MotherFirstName LIKE '%' + @Keyword + '%'
+                OR c.MotherLastName LIKE '%' + @Keyword + '%'
+                OR SOUNDEX(c.CustomerLastName) = SOUNDEX(@Keyword)
                 )
                 ORDER BY c.CustomerRisk DESC, c.CustomerLastName ASC";
-
+            
             var results = await connection.QueryAsync<CustomerLookupDto>(query, new { Keyword = cleanKeyword });
-
             if (!results.Any())
             {
                 return NotFound(new { message = "No system profile records found matching that context criteria." });
             }
-
             return Ok(results);
         }
 
@@ -114,39 +116,37 @@ namespace RelationshipVisualizer.Controllers
             {
                 return BadRequest(new { message = "No system profile records target nodes allocated." });
             }
-
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
-
-            try 
+            try
             {
                 // 1. Fetch complete metadata records for all identities requested in the workspace payload pool
                 var profiles = (await connection.QueryAsync<CustomerNodeDetails>(@"
-                    SELECT 
-                        CustomerId AS Id, 
-                        CustomerNumber,
-                        UPPER(TRIM(ISNULL(CustomerLastName, ''))) AS LastName,
-                        CASE 
-                            WHEN TRIM(ISNULL(CorporateName, '')) <> '' THEN CorporateName
-                            ELSE CONCAT(CustomerLastName, ', ', CustomerFirstName, ' ', CustomerMiddleName) 
-                        END AS FullName,
-                        ISNULL(CustomerRisk, 'LOW') AS CustomerRisk, 
-                        ISNULL(WATCHLIST_STATUS, 'CLEARED') AS WatchlistStatus, 
-                        ISNULL(IsPep, 0) AS IsPep, 
-                        ISNULL(Narrative, '') AS Narrative,
-                        UPPER(TRIM(ISNULL(FatherFirstName, ''))) AS FatherFirstName, 
-                        UPPER(TRIM(ISNULL(FatherLastName, ''))) AS FatherLastName, 
-                        UPPER(TRIM(ISNULL(MotherFirstName, ''))) AS MotherFirstName, 
-                        UPPER(TRIM(ISNULL(MotherLastName, ''))) AS MotherLastName
-                    FROM Customers 
+                    SELECT
+                    CustomerId AS Id,
+                    CustomerNumber,
+                    UPPER(TRIM(ISNULL(CustomerLastName, ''))) AS LastName,
+                    CASE
+                    WHEN TRIM(ISNULL(CorporateName, '')) <> '' THEN CorporateName
+                    ELSE CONCAT(CustomerLastName, ', ', CustomerFirstName, ' ', CustomerMiddleName)
+                    END AS FullName,
+                    ISNULL(CustomerRisk, 'LOW') AS CustomerRisk,
+                    ISNULL(WATCHLIST_STATUS, 'CLEARED') AS WatchlistStatus,
+                    ISNULL(IsPep, 0) AS IsPep,
+                    ISNULL(Narrative, '') AS Narrative,
+                    UPPER(TRIM(ISNULL(FatherFirstName, ''))) AS FatherFirstName,
+                    UPPER(TRIM(ISNULL(FatherLastName, ''))) AS FatherLastName,
+                    UPPER(TRIM(ISNULL(MotherFirstName, ''))) AS MotherFirstName,
+                    UPPER(TRIM(ISNULL(MotherLastName, ''))) AS MotherLastName
+                    FROM Customers
                     WHERE CustomerId IN @Ids AND IsActive = 1", new { Ids = request.SelectedIds })).ToList();
 
                 // 2. Fetch all matching contextual relationship mappings from Joint Account configurations
                 var jointAccounts = (await connection.QueryAsync<dynamic>(@"
-                    SELECT CustomerId, CustomerAccountId 
-                    FROM JointAccounts 
+                    SELECT CustomerId, CustomerAccountId
+                    FROM JointAccounts
                     WHERE CustomerId IN @Ids AND IsActive = 1", new { Ids = request.SelectedIds })).ToList();
-
+                
                 var graphData = new GraphData();
                 var uniqueNodes = new HashSet<string>();
 
@@ -159,19 +159,18 @@ namespace RelationshipVisualizer.Controllers
                         string risk = p.CustomerRisk.ToUpper();
                         bool isThreat = p.WatchlistStatus.ToUpper() == "MATCHED" || p.IsPep;
                         string nodeGroup = isThreat ? "SanctionRisk" : (risk == "HIGH" ? "HighRisk" : "Standard");
-
                         string tooltipHtml = $@"
                             <div>
-                                <strong style='color:#06b6d4; font-size:0.85rem;'>{p.FullName}</strong><br/>
-                                <span style='color:#94a3b8;'>ID:</span> {pid} | <span style='color:#94a3b8;'>Ref:</span> {p.CustomerNumber}<br/>
-                                <span style='color:#94a3b8;'>Risk:</span> {risk}<br/>
-                                <span style='color:#94a3b8;'>Watchlist:</span> {p.WatchlistStatus}<br/>
-                                <span style='color:#94a3b8;'>PEP Status:</span> {(p.IsPep ? "ALERT MATCH" : "No")}
+                            <strong style='color:#06b6d4; font-size:0.85rem;'>{p.FullName}</strong><br/>
+                            <span style='color:#94a3b8;'>ID:</span> {pid} | <span style='color:#94a3b8;'>Ref:</span> {p.CustomerNumber}<br/>
+                            <span style='color:#94a3b8;'>Risk:</span> {risk}<br/>
+                            <span style='color:#94a3b8;'>Watchlist:</span> {p.WatchlistStatus}<br/>
+                            <span style='color:#94a3b8;'>PEP Status:</span> {(p.IsPep ? "ALERT MATCH" : "No")}
                             </div>";
-
-                        graphData.Nodes.Add(new Node { 
-                            Id = pid, 
-                            Label = p.FullName, 
+                        
+                        graphData.Nodes.Add(new Node {
+                            Id = pid,
+                            Label = p.FullName,
                             Group = nodeGroup,
                             Title = tooltipHtml,
                             CustomData = p
@@ -188,15 +187,15 @@ namespace RelationshipVisualizer.Controllers
                         var targetB = profiles[j];
 
                         // Check Lineage Vector 1: Shared Father
-                        bool sharedFather = !string.IsNullOrEmpty(targetA.FatherLastName) && 
-                                            targetA.FatherLastName == targetB.FatherLastName && 
-                                            targetA.FatherFirstName == targetB.FatherFirstName;
+                        bool sharedFather = !string.IsNullOrEmpty(targetA.FatherLastName) &&
+                            targetA.FatherLastName == targetB.FatherLastName &&
+                            targetA.FatherFirstName == targetB.FatherFirstName;
 
                         // Check Lineage Vector 2: Shared Mother
-                        bool sharedMother = !string.IsNullOrEmpty(targetA.MotherLastName) && 
-                                            targetA.MotherLastName == targetB.MotherLastName && 
-                                            targetA.MotherFirstName == targetB.MotherFirstName;
-                        
+                        bool sharedMother = !string.IsNullOrEmpty(targetA.MotherLastName) &&
+                            targetA.MotherLastName == targetB.MotherLastName &&
+                            targetA.MotherFirstName == targetB.MotherFirstName;
+
                         // Check Vector 3: Shared Banking Entities (Joint Account Links)
                         var aAccounts = jointAccounts.Where(ja => ja.CustomerId == targetA.Id).Select(ja => ja.CustomerAccountId).ToList();
                         var bAccounts = jointAccounts.Where(ja => ja.CustomerId == targetB.Id).Select(ja => ja.CustomerAccountId).ToList();
@@ -204,22 +203,22 @@ namespace RelationshipVisualizer.Controllers
 
                         if (sharedFather && sharedMother)
                         {
-                            graphData.Edges.Add(new Edge { 
-                                From = targetA.Id.ToString(), To = targetB.Id.ToString(), 
+                            graphData.Edges.Add(new Edge {
+                                From = targetA.Id.ToString(), To = targetB.Id.ToString(),
                                 Label = "Sibling Link", Title = "Confirmed Maternal & Paternal Alignment Paths"
                             });
                         }
                         else if (sharedFather || sharedMother)
                         {
-                            graphData.Edges.Add(new Edge { 
-                                From = targetA.Id.ToString(), To = targetB.Id.ToString(), 
+                            graphData.Edges.Add(new Edge {
+                                From = targetA.Id.ToString(), To = targetB.Id.ToString(),
                                 Label = "Immediate Family", Title = $"Shared Parent: {(sharedFather ? "Father Vector" : "Mother Vector")}"
                             });
                         }
                         else if (sharedAccts.Any())
                         {
-                            graphData.Edges.Add(new Edge { 
-                                From = targetA.Id.ToString(), To = targetB.Id.ToString(), 
+                            graphData.Edges.Add(new Edge {
+                                From = targetA.Id.ToString(), To = targetB.Id.ToString(),
                                 Label = "Joint Account Link", Title = $"Shared Joint Account Reference ID: {sharedAccts.First()}"
                             });
                         }
@@ -227,7 +226,6 @@ namespace RelationshipVisualizer.Controllers
                 }
 
                 // 4. Dynamic Relational Hub Node Construction for Shared Surnames
-                // Group profiles by surname where the surname value exists
                 var surnameGroups = profiles
                     .Where(p => !string.IsNullOrWhiteSpace(p.LastName))
                     .GroupBy(p => p.LastName)
@@ -243,15 +241,15 @@ namespace RelationshipVisualizer.Controllers
                     {
                         string hubTooltipHtml = $@"
                             <div style='padding: 4px;'>
-                                <strong style='color:#8b5cf6; font-size:0.85rem;'>Surname Cluster Hub: {surname}</strong><br/>
-                                <span style='color:#94a3b8;'>Total Intersecting Nodes:</span> {group.Count()}
+                            <strong style='color:#8b5cf6; font-size:0.85rem;'>Surname Cluster Hub: {surname}</strong><br/>
+                            <span style='color:#94a3b8;'>Total Intersecting Nodes:</span> {group.Count()}
                             </div>";
-
+                        
                         graphData.Nodes.Add(new Node
                         {
                             Id = hubNodeId,
                             Label = $"{surname} (Hub)",
-                            Group = "RelationalHub", // Assign a unique group identity for custom UI styling/colors in vis.js
+                            Group = "RelationalHub",
                             Title = hubTooltipHtml,
                             CustomData = new { Type = "SurnameHub", Surname = surname }
                         });
