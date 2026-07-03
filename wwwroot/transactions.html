@@ -12,7 +12,84 @@
       flex-direction: column;
       height: 100%;
       position: relative;
+      background: #080b11;
+      transition: background 0.2s ease, color 0.2s ease;
     }
+    
+    /* light mode */
+    .view-container.light-mode {
+      background: #f1f5f9;
+    }
+    
+    .view-container.light-mode .canvas-toolbar {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode .btn-toolbar {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+    
+    .view-container.light-mode .btn-toolbar:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    
+    .view-container.light-mode .canvas-legend {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+    
+    .view-container.light-mode .legend-header {
+      color: #0f172a !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+    
+    .view-container.light-mode .legend-item span {
+      color: #334155 !important;
+      font-weight: 500;
+    }
+    
+    .view-container.light-mode .canvas-empty {
+      color: #475569;
+    }
+    
+    .view-container.light-mode .toolbar-toggle-wrapper {
+      color: #334155;
+      border-left-color: #cbd5e1;
+    }
+
+    /* Light Mode Table View Override */
+    .view-container.light-mode + .table-view-panel,
+    .view-container.light-mode ~ #tableReportPanel {
+      background: #ffffff;
+      border-top: 1px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .panel-header-actions {
+      background: #f8fafc;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .report-grid-table th {
+      background: #f1f5f9;
+      color: #475569;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .report-grid-table td {
+      color: #334155;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .report-grid-table tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Base Layout System Structuring */
     .canvas-container {
       display: flex;
       flex-direction: column;
@@ -82,6 +159,42 @@
     }
     .select-dropdown:focus {
       border-color: #3b82f6;
+    }
+    
+    /* Toolbar Toggle Elements & Custom Scrollbar Customizations */
+    .toolbar-toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding-left: 0.75rem;
+      border-left: 1px solid #1e293b;
+    }
+    .toolbar-toggle-wrapper svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      flex-shrink: 0;
+    }
+    
+    #searchResultsContainer::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    #searchResultsContainer::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 4px;
+    }
+    #searchResultsContainer::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+      border: 1px solid #0f172a;
+    }
+    #searchResultsContainer::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+    #searchResultsContainer {
+      scrollbar-width: thin;
+      scrollbar-color: #1e293b #0f172a;
     }
   </style>
 </head>
@@ -197,7 +310,7 @@
       </aside>
 
       <div class="canvas-container">
-        <div class="view-container" style="flex-grow:1;">
+        <div id="canvasViewportFrame" class="view-container" style="flex-grow:1;">
           <div id="canvasLoadingOverlay" class="canvas-loader">
             <div class="spinner"></div>
             <div class="loader-text">Generating transaction graph…</div>
@@ -208,6 +321,16 @@
             <button class="btn-toolbar" onclick="togglePhysics()" id="btnPhysics"><span id="physicsLabel">Physics</span></button>
             <button class="btn-toolbar" onclick="toggleReportTablePanel()" id="btnToggleTable">Show Data Table</button>
             <button class="btn-toolbar danger" onclick="clearNetworkCanvas()">Clear</button>
+            
+            <div class="toolbar-toggle-wrapper" style="margin-right:5px;">
+              <svg id="themeToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <label class="toggle-switch">
+                <input type="checkbox" id="canvasThemeToggle" onchange="toggleCanvasTheme(this)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
 
           <div class="canvas-legend">
@@ -217,7 +340,7 @@
               <span>Sender Account</span>
             </div>
             <div class="legend-item">
-              <div class="legend-indicator diamond" style="background:#f59e0b;border:1px solid #b45309;"></div>
+              <div class="legend-indicator" style="background:#f59e0b;border:1px solid #b45309;"></div>
               <span>Transaction</span>
             </div>
             <div class="legend-item">
@@ -245,7 +368,7 @@
         <div id="tableReportPanel" class="table-view-panel">
           <div class="panel-header-actions">
             <div style="display:flex; align-items:center; gap:0.5rem;">
-              <span class="section-label" style="margin:0;color:#94a3b8;">Granular Transaction Record Audit</span>
+              <span class="section-label" style="margin:0;color:#94a3b8;" id="tablePanelMainTitle">Granular Transaction Record Audit</span>
               <span id="tableFilterIndicator" style="font-size:11px; color:#e2e8f0; background:#1e293b; padding:2px 6px; border-radius:4px; display:none;"></span>
             </div>
             <button class="close-inspector" style="position:static;padding:0;line-height:1;" onclick="toggleReportTablePanel()">×</button>
@@ -272,17 +395,6 @@
               </tbody>
             </table>
           </div>
-        </div>
-
-        <div id="nodeDetailPanel" class="inspector-panel">
-          <div class="inspector-header">
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-              <div id="nodePanelTypeIndicator" class="type-dot"></div>
-              <h3>Node Inspector</h3>
-            </div>
-            <button class="close-inspector" onclick="closeNodeDetailPanel()">×</button>
-          </div>
-          <div id="nodeDetailContent" class="metrics-grid"></div>
         </div>
       </div>
     </div>
@@ -323,6 +435,53 @@
     }
   }
 
+  function toggleCanvasTheme(toggleInput) {
+    const frame = document.getElementById('canvasViewportFrame');
+    const iconContainer = document.getElementById('themeToggleIcon');
+    const isLightMode = toggleInput.checked;
+    const titleText = document.getElementById('tablePanelMainTitle');
+    
+    if (isLightMode) {
+      frame.classList.add('light-mode');
+      if (titleText) titleText.style.color = '#475569';
+      
+      // Swap to your sun icon structure when checkbox is checked (Light Mode Active)
+      iconContainer.innerHTML = `
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3.5"></line>
+        <line x1="12" y1="20.5" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="6" y2="6"></line>
+        <line x1="18" y1="18" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3.5" y2="12"></line>
+        <line x1="20.5" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="6" y2="18"></line>
+        <line x1="18" y1="6" x2="19.78" y2="4.22"></line>
+      `;
+    } else {
+      frame.classList.remove('light-mode');
+      if (titleText) titleText.style.color = '#94a3b8';
+      
+      // Swap back to your crescent moon path when unchecked (Dark Mode Active)
+      iconContainer.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+    }
+
+    if (networkInstance) {
+      const labelColor = isLightMode ? '#1e293b' : '#94a3b8';
+      const edgeBgColor = isLightMode ? '#f1f5f9' : '#080b11';
+      const edgeLineColor = isLightMode ? '#94a3b8' : '#26334d';
+
+      networkInstance.setOptions({
+        nodes: {
+          font: { color: labelColor }
+        },
+        edges: {
+          color: { color: edgeLineColor },
+          font: { background: edgeBgColor }
+        }
+      });
+    }
+  }
+
   function onFilterChange() {
     const values = [
       document.getElementById('startDate').value,
@@ -353,7 +512,6 @@
       const payload = await response.json();
       const branches = Array.isArray(payload) ? payload : [];
 
-      // The backend's static branch list contains some duplicate names — keep only the first of each
       const seenNames = new Set();
       const uniqueSorted = branches
         .filter(b => {
@@ -510,7 +668,6 @@
 
     const overlay = document.getElementById('canvasLoadingOverlay');
     overlay.style.display = 'flex';
-    closeNodeDetailPanel();
     resetTableFilters();
 
     try {
@@ -522,7 +679,6 @@
         return;
       }
 
-      // Safeguard against missing/variant payload naming keys
       const tableData = rawData.tableReportData || rawData.TableReportData || rawData.reportData || rawData.ReportData || [];
       populateReportTable(tableData);
 
@@ -558,24 +714,29 @@
         seenEdges.add(finalId);
         visEdges.push({
           id: finalId, from: edge.from ?? edge.From, to: edge.to ?? edge.To,
-          label: edge.label ?? edge.Label ?? '',
-          font: { align: 'horizontal', size: 10, color: '#64748b', background: '#080b11' }
+          label: edge.label ?? edge.Label ?? ''
         });
       });
 
+      const isLightMode = document.getElementById('canvasThemeToggle').checked;
+      const initialLabelColor = isLightMode ? '#1e293b' : '#94a3b8';
+      const initialEdgeBgColor = isLightMode ? '#f1f5f9' : '#080b11';
+      const initialEdgeLineColor = isLightMode ? '#94a3b8' : '#26334d';
+
       const options = {
-        nodes: { borderWidth: 2, font: { size: 11, color: '#94a3b8', face: 'Segoe UI', vadjust: 26 } },
+        nodes: { borderWidth: 2, font: { size: 11, color: initialLabelColor, face: 'Segoe UI', vadjust: 26 } },
         edges: {
           arrows: { to: { enabled: true, scaleFactor: 0.75 } },
-          color: { color: '#26334d', highlight: '#06b6d4', hover: '#3b82f6' },
+          color: { color: initialEdgeLineColor, highlight: '#06b6d4', hover: '#3b82f6' },
           smooth: { enabled: true, type: 'cubicBezier', roundness: 0.4 },
-          width: 1.5
+          width: 1.5,
+          font: { align: 'horizontal', size: 10, color: '#64748b', background: initialEdgeBgColor }
         },
         groups: {
           Sender: { shape: 'dot', size: 20, color: { background: '#4f46e5', border: '#4338ca', highlight: { background: '#818cf8', border: '#4338ca' } } },
           Beneficiary: { shape: 'dot', size: 20, color: { background: '#10b981', border: '#047857', highlight: { background: '#34d399', border: '#047857' } } },
           UnknownBeneficiary: { shape: 'dot', size: 20, color: { background: '#0f172a', border: '#020617', highlight: { background: '#334155', border: '#020617' } } },
-          Transaction: { shape: 'diamond', size: 14, color: { background: '#f59e0b', border: '#b45309', highlight: { background: '#fbbf24', border: '#b45309' } }, font: { vadjust: 22, size: 10, color: '#fbbf24', face: 'monospace' } },
+          Transaction: { shape: 'diamond', size: 14, color: { background: '#f59e0b', border: '#b45309', highlight: { background: '#fbbf24', border: '#b45309' } }, font: { vadjust: 22, size: 10, color: '#f59e0b', face: 'monospace' } },
           Customer: { shape: 'dot', size: 20, color: { background: '#0ea5e9', border: '#0369a1', highlight: { background: '#38bdf8', border: '#0369a1' } } }
         },
         physics: { enabled: true, barnesHut: { gravitationalConstant: -2500, centralGravity: 0.2, springLength: 140, springConstant: 0.04 }, stabilization: { iterations: 200, updateInterval: 25 } },
@@ -599,10 +760,8 @@
       networkInstance.on('click', params => {
         if (params.nodes.length > 0) {
           const selectedNodeId = params.nodes[0];
-          showNodeDetailPanel(selectedNodeId);
           filterReportTableByNode(selectedNodeId);
         } else {
-          closeNodeDetailPanel();
           resetTableFilters();
         }
       });
@@ -621,6 +780,7 @@
     }
   }
 
+  // remaining presentation and table core handlers untouched for dependency tree stability...
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -629,7 +789,6 @@
 
   function populateReportTable(dataArray) {
     const tbody = document.getElementById('tableReportRows');
-    
     if (!dataArray || dataArray.length === 0) {
       tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No results match the specified criteria.</td></tr>`;
       return;
@@ -637,7 +796,6 @@
 
     let rowsHtml = '';
     dataArray.forEach(row => {
-      // Robust fallbacks for PascalCase, camelCase, lowercase and alternate identifiers
       const refNumber = row.referenceNumber || row.ReferenceNumber || row.refNumber || row.RefNumber || row.id || row.Id || 'N/A';
       const txnDate = row.date || row.Date || row.transactionDate || row.TransactionDate || 'N/A';
       const txnType = row.type || row.Type || row.transactionType || row.TransactionType || 'N/A';
@@ -675,7 +833,7 @@
     const searchToken = String(nodeId).trim().toLowerCase();
 
     rows.forEach(row => {
-      if (row.cells.length < 2) return; // Skip empty/state row banners
+      if (row.cells.length < 2) return;
 
       const ref = (row.getAttribute('data-ref') || '').toLowerCase();
       const sender = (row.getAttribute('data-sender') || '').toLowerCase();
@@ -718,6 +876,7 @@
     networkInstance?.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
   }
 
+  // configuration flags mapping functions
   function togglePhysics() {
     if (!networkInstance) return;
     physicsEnabled = !physicsEnabled;
@@ -736,7 +895,6 @@
     setToolbarVisible(false);
     document.getElementById('graphStatsBar').classList.add('hidden');
     document.getElementById('tableReportRows').innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No dataset queried. Run visualization logic.</td></tr>`;
-    closeNodeDetailPanel();
     resetTableFilters();
     showToast('Canvas cleared.');
   }
@@ -750,18 +908,6 @@
     document.getElementById('statEdges').textContent = edges;
     document.getElementById('statTxns').textContent = txns;
     document.getElementById('graphStatsBar').classList.remove('hidden');
-  }
-
-  function showNodeDetailPanel(nodeId) {
-    const data = nodeTooltipMap[nodeId];
-    if (!data) return;
-    document.getElementById('nodePanelTypeIndicator').style.backgroundColor = GROUP_COLORS[data.group] || '#94a3b8';
-    document.getElementById('nodeDetailContent').innerHTML = data.html || `<div class="metric-block"><div class="metric-value">${nodeId}</div></div>`;
-    document.getElementById('nodeDetailPanel').classList.add('open');
-  }
-
-  function closeNodeDetailPanel() {
-    document.getElementById('nodeDetailPanel').classList.remove('open');
   }
 
   function showToast(message) {
