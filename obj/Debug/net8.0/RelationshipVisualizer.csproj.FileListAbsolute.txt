@@ -78,6 +78,16 @@ C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Azure.Identity.dll
 C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Dapper.dll
 C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
 C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Identity.Client.dll
 C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
 C:\Users\avmapalad\Desktop\MyProjects\RST\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
@@ -117,6 +127,7 @@ C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualize
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.AssemblyInfo.cs
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.csproj.CoreCompileInputs.cache
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.sourcelink.json
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -132,4 +143,3 @@ C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\refint\RelationshipVi
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.pdb
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.genruntimeconfig.cache
 C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\ref\RelationshipVisualizer.dll
-C:\Users\avmapalad\Desktop\MyProjects\RST\obj\Debug\net8.0\RelationshipVisualizer.sourcelink.json

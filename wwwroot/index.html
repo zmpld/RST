@@ -3,287 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vanguard Relational Intelligence Core</title>
+  <title>LedgerLink Analytics - Relationship Search</title>
+  <link rel="stylesheet" href="/css/app.css">
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <style>
-    :root {
-      --bg-deep: #080b11;
-      --bg-surface: #121824;
-      --bg-surface-light: #1c2436;
-      --border: #26334d;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --cyan: #06b6d4;
-      --emerald: #10b981;
-      --amber: #f59e0b;
-      --rose: #f43f5e;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      background-color: var(--bg-deep);
-      color: var(--text-primary);
-      overflow: hidden;
-    }
-    .app-shell {
-      display: grid;
-      grid-template-rows: 65px 1fr;
-      height: 100vh;
-    }
-    header {
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1.5rem;
-    }
-    header h1 {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin: 0;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    header h1::before {
-      content: '';
-      width: 8px; height: 8px;
-      background: var(--cyan);
-      border-radius: 50%;
-    }
-    .main-workspace {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      height: 100%;
-      position: relative;
-    }
-    .sidebar {
-      background: var(--bg-surface);
-      border-right: 1px solid var(--border);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      overflow-y: auto;
-      z-index: 10;
-    }
-    .canvas-container {
-      position: relative;
-      background: var(--bg-deep);
-      width: 100%;
-      height: 100%;
-    }
-    #network-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    .canvas-legend {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(18, 24, 36, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.85rem;
-      z-index: 90;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
-      pointer-events: none;
-    }
-    .legend-header {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 4px;
-      margin-bottom: 2px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.75rem;
-      color: var(--text-primary);
-    }
-    .legend-indicator {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    #canvas-loader {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(8, 11, 17, 0.85);
-      backdrop-filter: blur(6px);
-      z-index: 99;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-    }
-    .spinner {
-      width: 45px; height: 45px;
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--cyan);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    .loader-text {
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-      color: var(--cyan);
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-    @keyframes spin { 
-      0% { transform: rotate(0deg); } 
-      100% { transform: rotate(360deg); } 
-    }
-    div.vis-network div.vis-tooltip {
-      background-color: rgba(18, 24, 36, 0.95) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: 6px !important;
-      color: var(--text-primary) !important;
-      font-family: sans-serif !important;
-      font-size: 0.8rem !important;
-      padding: 0.75rem !important;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-      line-height: 1.4 !important;
-    }
-    .inspector-panel {
-      position: absolute;
-      right: -380px; top: 0;
-      width: 340px; height: calc(100% - 2.5rem);
-      background: rgba(18, 24, 36, 0.95);
-      backdrop-filter: blur(12px);
-      border-left: 1px solid var(--border);
-      padding: 1.25rem;
-      overflow-y: auto;
-      transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 100;
-      box-shadow: -10px 0 25px rgba(0,0,0,0.5);
-    }
-    .inspector-panel.open { right: 0; }
-    .inspector-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    .inspector-header h2 { font-size: 1rem; margin: 0; font-weight: 600; color: var(--cyan); }
-    .close-inspector { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem; padding: 0; }
-    .close-inspector:hover { color: var(--rose); }
-    .field-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .header-action-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-
-    .select-all-container {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      cursor: pointer;
-      text-transform: uppercase;
-      font-weight: 600;
-      user-select: none;
-    }
-    .select-all-container input { accent-color: var(--cyan); margin: 0; cursor: pointer; }
-    label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
-    input[type="text"] {
-      background: var(--bg-deep); border: 1px solid var(--border); border-radius: 6px;
-      padding: 0.65rem; color: var(--text-primary); font-size: 0.85rem; transition: border 0.2s;
-    }
-    input[type="text"]:focus { outline: none; border-color: var(--cyan); }
-    button {
-      background: var(--cyan); color: #000; border: none; padding: 0.65rem; border-radius: 6px;
-      cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;
-    }
-    button:hover { background: #22d3ee; transform: translateY(-1px); }
-    .btn-secondary { background: var(--bg-surface-light); color: var(--text-primary); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); color: white; transform: none; }
-    .btn-danger { background: rgba(244, 63, 94, 0.1); border: 1px solid var(--rose); color: var(--rose); }
-    .btn-danger:hover { background: var(--rose); color: white; transform: none; }
-    .results-box { border: 1px solid var(--border); border-radius: 6px; background: var(--bg-deep); max-height: 380px; overflow-y: auto; }
-    .entity-card { padding: 0.85rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.75rem; align-items: flex-start; }
-    .entity-card:last-child { border-bottom: none; }
-    .entity-card input[type="checkbox"] { margin-top: 0.2rem; accent-color: var(--cyan); }
-    .meta-stack { display: flex; flex-direction: column; gap: 3px; width: 100%; }
-    .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-    .entity-title { font-weight: 500; font-size: 0.9rem; color: var(--text-primary); line-height: 1.3; }
-    .entity-subtitle { font-size: 0.75rem; color: var(--text-secondary); }
-
-    .pill-row { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
-    .pill { font-size: 0.65rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
-    .pill.id { background: var(--bg-surface-light); color: var(--text-secondary); }
-    .pill.high { background: rgba(244, 63, 94, 0.15); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
-    .pill.med { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .pill.low { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
-
-    .match-badge {
-      font-size: 0.75rem; font-weight: 700; font-family: monospace;
-      padding: 2px 6px; border-radius: 4px; white-space: nowrap;
-    }
-    .match-high { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .match-mid { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-    .match-low { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
-    .metrics-grid { display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.8rem; }
-    .metric-block { background: var(--bg-deep); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); }
-    .metric-label { color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
-    .metric-value { font-family: monospace; color: var(--text-primary); word-break: break-all; }
-    .empty-state { text-align: center; color: var(--text-secondary); font-style: italic; font-size: 0.8rem; padding: 2rem 1rem; }
-  </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
-      <h1>Vanguard Relational Intelligence Core</h1>
-      <div style="font-size: 0.8rem; color: var(--text-secondary);">Matrix Link Status: <span style="color: var(--emerald);">Online</span></div>
+      <h1>LedgerLink Analytics - Relationship Search</h1>
+      <div class="header-right">
+        <nav class="app-tabs">
+          <a href="/index.html" class="app-tab active">Relationship Search</a>
+          <a href="/transactions.html" class="app-tab">Transaction Flow</a>
+        </nav>
+        <div class="status-badge">System Status: <span>Online</span></div>
+      </div>
     </header>
+
     <div class="main-workspace">
-      <div class="sidebar">
-        <div class="field-group">
-          <label>Identity String Cross-Match</label>
-          <input type="text" id="search-input" placeholder="Type a primary identity signature...">
-          <button onclick="executeEngineSearch()">Search Records</button>
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <p class="section-label">1. Search Customers</p>
+          <div class="field-group">
+            <div class="search-row">
+              <input type="text" id="search-input" placeholder="Enter name, corporate entity, or family member…"
+                     onkeydown="if(event.key==='Enter') executeEngineSearch()">
+              <button onclick="executeEngineSearch()">Search</button>
+            </div>
+          </div>
         </div>
-        <div class="field-group" style="flex-grow: 1;">
+
+        <div class="sidebar-section grow">
           <div class="header-action-row">
-            <label>Identified Cross Matches</label>
-            <label class="select-all-container" id="select-all-wrapper" style="display: none;">
+            <span class="section-label" style="margin:0">2. Select Matches</span>
+            <label class="select-all-container hidden" id="select-all-wrapper">
               <input type="checkbox" id="global-select-all" onclick="toggleSelectAllItems(this)">
               Select All
             </label>
           </div>
-          <div id="results-container" class="results-box">
-            <div class="empty-state">No search parameter models currently evaluated.</div>
+          <div id="results-container" class="results-box plain">
+            <div class="empty-state">Search for a customer to see matching profiles.</div>
           </div>
         </div>
-        <div class="field-group" style="margin-top: auto; gap: 0.5rem;">
-          <button class="btn-secondary" onclick="renderVisualizerMatrix()">Plot Connections Canvas</button>
-          <button class="btn-danger" onclick="wipeLocalCanvasWorkspace()">Reset Analytics Matrix</button>
+
+        <div class="sidebar-footer">
+          <button class="btn-secondary btn-full" onclick="renderVisualizerMatrix()">Visualize Relationships</button>
+          <button class="btn-danger btn-full" onclick="wipeLocalCanvasWorkspace()">Clear Workspace</button>
         </div>
-      </div>
+      </aside>
+
       <div class="canvas-container">
-        <div id="canvas-loader">
+        <div id="canvas-loader" class="canvas-loader">
           <div class="spinner"></div>
-          <div id="loader-message" class="loader-text">Compiling Matrix Elements...</div>
+          <div id="loader-message" class="loader-text">Loading…</div>
         </div>
+
         <div class="canvas-legend">
-          <div class="legend-header">Node Classification</div>
+          <div class="legend-header">Node Types</div>
           <div class="legend-item">
             <div class="legend-indicator" style="background:#f43f5e;border:1px solid #be123c;"></div>
             <span>Sanction / PEP Match</span>
@@ -297,7 +73,7 @@
             <span>Standard Customer</span>
           </div>
           <div class="legend-item">
-            <div class="legend-indicator" style="background: #8b5cf6; border: 1px solid #6d28d9;"></div>
+            <div class="legend-indicator" style="background:#8b5cf6;border:1px solid #6d28d9;"></div>
             <span>Relational Hub</span>
           </div>
           <div class="legend-header" style="margin-top:8px;">Relationship Types</div>
@@ -306,10 +82,12 @@
           <div class="legend-item"><span>Joint Account Link</span></div>
           <div class="legend-item"><span>Shared Surname</span></div>
         </div>
-        <div id="network-canvas"></div>
+
+        <div id="network-canvas" class="network-canvas"></div>
+
         <div id="drawer-inspector" class="inspector-panel">
           <div class="inspector-header">
-            <h2>Entity Metrics Descriptor</h2>
+            <h2>Customer Details</h2>
             <button class="close-inspector" onclick="closeInspectorDrawer()">×</button>
           </div>
           <div id="inspector-metrics-root" class="metrics-grid"></div>
@@ -329,15 +107,14 @@
       'nerisa': ['neris', 'nerry']
     };
 
-    function toggleLoader(show, text = "Processing Transactional Data...") {
+    function toggleLoader(show, text = "Processing…") {
       const loader = document.getElementById('canvas-loader');
       document.getElementById('loader-message').innerText = text;
       loader.style.display = show ? 'flex' : 'none';
     }
 
     function toggleSelectAllItems(masterCheckbox) {
-      const checkboxes = document.querySelectorAll('.target-entity-selector');
-      checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+      document.querySelectorAll('.target-entity-selector').forEach(cb => cb.checked = masterCheckbox.checked);
     }
 
     function calculateFuzzyScore(queryStr, item) {
@@ -345,7 +122,6 @@
       const mName = (item.middleName ?? item.MiddleName ?? '').toLowerCase();
       const lName = (item.lastName ?? item.LastName ?? '').toLowerCase();
       const cName = (item.corporateName ?? item.CorporateName ?? '').toLowerCase();
-
       const cleanQuery = queryStr.toLowerCase().replace(/[\s\-_,]/g, '');
       if (!cleanQuery) return 0;
       if (cName) {
@@ -356,26 +132,15 @@
       if (queryTokens.length === 0) return 0;
       const targetSegments = [fName, mName, lName].filter(t => t.length > 0);
       const absoluteFullCombined = targetSegments.join('');
-      if (absoluteFullCombined.includes(cleanQuery) || cleanQuery.includes(absoluteFullCombined)) {
-        return 100;
-      }
+      if (absoluteFullCombined.includes(cleanQuery) || cleanQuery.includes(absoluteFullCombined)) return 100;
       let verifiedTokens = 0;
       queryTokens.forEach(token => {
         let matchedSegment = false;
-
-        targetSegments.forEach(seg => {
-          if (seg.includes(token) || token.includes(seg)) {
-            matchedSegment = true;
-          }
-        });
+        targetSegments.forEach(seg => { if (seg.includes(token) || token.includes(seg)) matchedSegment = true; });
         if (!matchedSegment) {
           Object.keys(nicknameGlossary).forEach(key => {
             if (token === key || nicknameGlossary[key].includes(token)) {
-              targetSegments.forEach(seg => {
-                if (seg === key || nicknameGlossary[key].includes(seg)) {
-                  matchedSegment = true;
-                }
-              });
+              targetSegments.forEach(seg => { if (seg === key || nicknameGlossary[key].includes(seg)) matchedSegment = true; });
             }
           });
         }
@@ -384,11 +149,8 @@
       const tokenMatchRatio = verifiedTokens / queryTokens.length;
       if (tokenMatchRatio === 1) return 90;
       if (tokenMatchRatio >= 0.5) return 65;
-
       let subHits = 0;
-      queryTokens.forEach(t => {
-        if(absoluteFullCombined.includes(t)) subHits++;
-      });
+      queryTokens.forEach(t => { if (absoluteFullCombined.includes(t)) subHits++; });
       if (subHits > 0) return Math.min(40 + (subHits * 15), 60);
       return 0;
     }
@@ -399,9 +161,10 @@
       const selectAllToggle = document.getElementById('select-all-wrapper');
       const globalSelectorBox = document.getElementById('global-select-all');
 
-      if (!query) return alert('Provide an evaluation vector sequence.');
+      if (!query) return alert('Please enter a search term.');
       if (globalSelectorBox) globalSelectorBox.checked = false;
-      toggleLoader(true, "Scanning Database for Identity Overlaps...");
+      toggleLoader(true, "Searching customer records…");
+
       try {
         const response = await fetch('/api/network/lookup-profiles', {
           method: 'POST',
@@ -409,15 +172,16 @@
           body: JSON.stringify({ Keyword: query })
         });
         if (!response.ok) {
-          container.innerHTML = '<div class="empty-state" style="color:var(--rose)">No relational intersections verified inside indices.</div>';
-          selectAllToggle.style.display = 'none';
+          container.innerHTML = '<div class="empty-state error">No matching profiles found.</div>';
+          selectAllToggle.classList.add('hidden');
           return;
         }
         let collection = await response.json();
-        container.innerHTML = '';
-        if(collection.length === 0) {
-          container.innerHTML = '<div class="empty-state">No matches identified.</div>';
-          selectAllToggle.style.display = 'none';
+        container.innerHTML = '<div class="results-inner"></div>';
+        const inner = container.querySelector('.results-inner');
+        if (collection.length === 0) {
+          inner.innerHTML = '<div class="empty-state">No matches found.</div>';
+          selectAllToggle.classList.add('hidden');
           return;
         }
         collection = collection.map(item => {
@@ -430,22 +194,19 @@
           return item;
         });
         collection.sort((a, b) => b.computedMatchScore - a.computedMatchScore);
-        selectAllToggle.style.display = 'flex';
+        selectAllToggle.classList.remove('hidden');
         collection.forEach(item => {
           const card = document.createElement('div');
           card.className = 'entity-card';
-
           const id = item.id ?? item.Id;
           const fName = item.firstName ?? item.FirstName ?? '';
           const mName = item.middleName ?? item.MiddleName ?? '';
           const lName = item.lastName ?? item.LastName ?? '';
           const corpName = item.corporateName ?? item.CorporateName ?? '';
           const reason = item.matchReason ?? item.MatchReason ?? 'Fuzzy Pattern Hit';
-          const risk = (item.riskRating ?? item.RiskRating ?? 'LOW').toUpperCase();
           const isThreat = (item.watchlistStatus ?? item.WatchlistStatus) === "MATCHED" || (item.isPep ?? item.IsPep);
           const matchPercent = item.computedMatchScore;
           const title = corpName.trim() !== '' ? corpName : `${lName}, ${fName} ${mName}`;
-          const riskClass = risk === 'HIGH' || isThreat ? 'high' : (risk === 'MEDIUM' ? 'med' : 'low');
           const matchBadgeClass = matchPercent >= 85 ? 'match-high' : (matchPercent >= 60 ? 'match-mid' : 'match-low');
           card.innerHTML = `
             <input type="checkbox" class="target-entity-selector" value="${id}" onchange="evaluateSelectAllState()">
@@ -457,16 +218,15 @@
               <span class="entity-subtitle">${reason}</span>
               <div class="pill-row">
                 <span class="pill id">ID: ${id}</span>
-                ${isThreat ? '<span class="pill high">CRITICAL THREAT ALERT</span>' : ''}
+                ${isThreat ? '<span class="pill high">Critical Alert</span>' : ''}
               </div>
-            </div>
-          `;
-          container.appendChild(card);
+            </div>`;
+          inner.appendChild(card);
         });
       } catch (err) {
         console.error(err);
-        container.innerHTML = '<div class="empty-state" style="color:var(--rose)">Pipeline link interrupted.</div>';
-        selectAllToggle.style.display = 'none';
+        container.innerHTML = '<div class="empty-state error">Search failed. Check your connection.</div>';
+        selectAllToggle.classList.add('hidden');
       } finally {
         toggleLoader(false);
       }
@@ -476,42 +236,29 @@
       const total = document.querySelectorAll('.target-entity-selector').length;
       const checked = document.querySelectorAll('.target-entity-selector:checked').length;
       const globalSelectorBox = document.getElementById('global-select-all');
-      if (globalSelectorBox) {
-        globalSelectorBox.checked = (total === checked && total > 0);
-      }
+      if (globalSelectorBox) globalSelectorBox.checked = (total === checked && total > 0);
     }
 
     async function renderVisualizerMatrix() {
       const selectors = document.querySelectorAll('.target-entity-selector:checked');
-
-      const checkedIds = Array.from(selectors)
-        .map(el => parseInt(el.value))
-        .filter(val => !isNaN(val));
-
-      const existingIds = nodesDataset.getIds()
-        .map(id => parseInt(id))
-        .filter(val => !isNaN(val));
-
+      const checkedIds = Array.from(selectors).map(el => parseInt(el.value)).filter(val => !isNaN(val));
+      const existingIds = nodesDataset.getIds().map(id => parseInt(id)).filter(val => !isNaN(val));
       const combinedPool = Array.from(new Set([...checkedIds, ...existingIds]));
-      if (combinedPool.length === 0) return alert('Select identity options inside the results payload layout list to map.');
-      toggleLoader(true, "Compiling Network Clusters & Physics Formations...");
+      if (combinedPool.length === 0) return alert('Select at least one customer from the results list.');
+      toggleLoader(true, "Building relationship graph…");
+
       try {
         const response = await fetch('/api/network/visualize-selected', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ SelectedIds: combinedPool })
         });
-        if (!response.ok) throw new Error("Graph Engine returned error response status.");
+        if (!response.ok) throw new Error("Graph engine returned an error.");
         const graphPayload = await response.json();
+
         if (!networkInstance) {
-          const canvasDiv = document.getElementById('network-canvas');
-          const optionsConfig = {
-            nodes: {
-              shape: 'dot',
-              size: 24,
-              font: { size: 11, color: '#94a3b8', face: 'Segoe UI', vadjust: 34 },
-              borderWidth: 2
-            },
+          networkInstance = new vis.Network(document.getElementById('network-canvas'), { nodes: nodesDataset, edges: edgesDataset }, {
+            nodes: { shape: 'dot', size: 24, font: { size: 11, color: '#94a3b8', face: 'Segoe UI', vadjust: 34 }, borderWidth: 2 },
             edges: {
               font: { size: 10, align: 'middle', background: '#080b11', color: '#94a3b8', strokeWidth: 0 },
               color: { color: '#26334d', highlight: '#06b6d4', hover: '#3b82f6' },
@@ -520,49 +267,25 @@
               smooth: { type: 'continuous', roundness: 0.4 }
             },
             groups: {
-              SanctionRisk: {
-                color: { background: '#f43f5e', border: '#be123c', hover: '#f43f5e' }
-              },
-              HighRisk: {
-                color: { background: '#f59e0b', border: '#b45309', hover: '#f59e0b' }
-              },
-              Standard: {
-                color: { background: '#00fae6', border: '#0891b2', hover: '#00fae6' }
-              },
+              SanctionRisk: { color: { background: '#f43f5e', border: '#be123c', hover: '#f43f5e' } },
+              HighRisk: { color: { background: '#f59e0b', border: '#b45309', hover: '#f59e0b' } },
+              Standard: { color: { background: '#00fae6', border: '#0891b2', hover: '#00fae6' } },
               RelationalHub: {
-                shape: 'dot',
-                size: 30,
-                color: {
-                  background: '#8b5cf6',
-                  border: '#6d28d9',
-                  highlight: { background: '#a855f7', border: '#7c3aed' },
-                  hover: { background: '#a855f7', border: '#7c3aed' }
-                },
+                shape: 'dot', size: 30,
+                color: { background: '#8b5cf6', border: '#6d28d9', highlight: { background: '#a855f7', border: '#7c3aed' }, hover: { background: '#a855f7', border: '#7c3aed' } },
                 font: { color: '#ffffff', size: 12, face: 'Segoe UI' }
               }
             },
-            physics: {
-              solver: 'forceAtlas2Based',
-              forceAtlas2Based: { gravitationalConstant: -120, springLength: 160, springConstant: 0.04, damping: 0.4 }
-            },
-            interaction: {
-              hover: true,
-              tooltipDelay: 150
-            }
-          };
-          networkInstance = new vis.Network(canvasDiv, { nodes: nodesDataset, edges: edgesDataset }, optionsConfig);
-
-          networkInstance.on("selectNode", function (params) {
-            const targetId = params.nodes[0];
-            const reference = nodesDataset.get(targetId);
-            if (reference && reference.customData) {
-              openInspectorDrawer(reference.customData);
-            }
+            physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -120, springLength: 160, springConstant: 0.04, damping: 0.4 } },
+            interaction: { hover: true, tooltipDelay: 150 }
           });
-          networkInstance.on("deselectNode", function () {
-            closeInspectorDrawer();
+          networkInstance.on("selectNode", params => {
+            const reference = nodesDataset.get(params.nodes[0]);
+            if (reference?.customData) openInspectorDrawer(reference.customData);
           });
+          networkInstance.on("deselectNode", () => closeInspectorDrawer());
         }
+
         graphPayload.nodes.forEach(n => {
           if (!nodesDataset.get(n.id)) {
             if (n.title && typeof n.title === 'string') {
@@ -573,23 +296,18 @@
             nodesDataset.add(n);
           }
         });
-        graphPayload.edges.forEach(e => {
-          const matching = edgesDataset.get({
-            filter: existing => (existing.from === e.from && existing.to === e.to) || (existing.from === e.to && existing.to === e.from)
-          });
 
+        graphPayload.edges.forEach(e => {
+          const matching = edgesDataset.get({ filter: existing => (existing.from === e.from && existing.to === e.to) || (existing.from === e.to && existing.to === e.from) });
           if (matching.length === 0) {
             if (e.relationshipType || e.jointAccountNo) {
               const type = (e.relationshipType || 'Unknown').toLowerCase();
               e.label = e.jointAccountNo ? `Joint Account: ${e.jointAccountNo}` : `${e.relationshipType}`;
-
               if (e.jointAccountNo) {
-                e.color = { color: '#10b981', highlight: '#34d399' };
-                e.width = 3;
+                e.color = { color: '#10b981', highlight: '#34d399' }; e.width = 3;
                 e.font = { color: '#10b981', background: '#080b11' };
               } else if (type === 'sibling' || type === 'relative' || type === 'spouse') {
-                e.color = { color: '#f59e0b', highlight: '#fbbf24' };
-                e.dashes = true;
+                e.color = { color: '#f59e0b', highlight: '#fbbf24' }; e.dashes = true;
                 e.font = { color: '#f59e0b', background: '#080b11' };
               } else if (type === 'colleague' || type === 'associate') {
                 e.color = { color: '#06b6d4', highlight: '#22d3ee' };
@@ -599,13 +317,13 @@
             edgesDataset.add(e);
           }
         });
+
         selectors.forEach(el => el.checked = false);
         const globalSelectorBox = document.getElementById('global-select-all');
         if (globalSelectorBox) globalSelectorBox.checked = false;
-
       } catch (err) {
         console.error(err);
-        alert('A layout computation handling issue occurred: ' + err.message);
+        alert('Failed to build graph: ' + err.message);
       } finally {
         toggleLoader(false);
       }
@@ -617,37 +335,12 @@
       if (data.Type === "SurnameHub" || data.type === "SurnameHub") {
         const surname = data.Surname ?? data.surname ?? "Unknown";
         const hubNodeId = `HUB_SURNAME_${surname}`;
-        const connectedProfiles = edgesDataset.get({
-          filter: e => e.to === hubNodeId || e.from === hubNodeId
-        }).length;
+        const connectedProfiles = edgesDataset.get({ filter: e => e.to === hubNodeId || e.from === hubNodeId }).length;
         content.innerHTML = `
-          <div class="metric-block" style="border-left:3px solid #8b5cf6;">
-            <div class="metric-label">Entity Type</div>
-            <div class="metric-value">Relational Cluster Hub</div>
-          </div>
-          <div class="metric-block">
-            <div class="metric-label">Cluster Category</div>
-            <div class="metric-value">Shared Surname Cluster</div>
-          </div>
-          <div class="metric-block">
-            <div class="metric-label">Surname</div>
-            <div class="metric-value">${surname}</div>
-          </div>
-          <div class="metric-block">
-            <div class="metric-label">Connected Customer Profiles</div>
-            <div class="metric-value">${connectedProfiles}</div>
-          </div>
-          <div class="metric-block">
-            <div class="metric-label">Relationship Type</div>
-            <div class="metric-value">Shared Surname</div>
-          </div>
-          <div class="metric-block">
-            <div class="metric-label">Description</div>
-            <div class="metric-value" style="font-family:sans-serif; color:var(--text-secondary); line-height:1.5;">
-              Automatically generated hub node representing every customer sharing the surname <b>${surname}</b>. This node is an aggregation point and does not represent an individual customer profile.
-            </div>
-          </div>
-        `;
+          <div class="metric-block" style="border-left:3px solid #8b5cf6;"><div class="metric-label">Entity Type</div><div class="metric-value">Relational Cluster Hub</div></div>
+          <div class="metric-block"><div class="metric-label">Surname</div><div class="metric-value">${surname}</div></div>
+          <div class="metric-block"><div class="metric-label">Connected Profiles</div><div class="metric-value">${connectedProfiles}</div></div>
+          <div class="metric-block"><div class="metric-label">Description</div><div class="metric-value prose">Hub node for all customers sharing the surname <b>${surname}</b>.</div></div>`;
         drawer.classList.add("open");
         return;
       }
@@ -661,48 +354,14 @@
       const mother = `${data.motherFirstName ?? data.MotherFirstName ?? ""} ${data.motherLastName ?? data.MotherLastName ?? ""}`.trim();
       const narrative = data.narrative ?? data.Narrative ?? "No profile notes.";
       content.innerHTML = `
-        <div class="metric-block" style="border-left:3px solid ${risk==="HIGH"?"var(--rose)":"var(--cyan)"}">
-          <div class="metric-label">Customer Name</div>
-          <div class="metric-value">${displayName}</div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">Customer ID</div>
-          <div class="metric-value">${id}</div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">Customer Number</div>
-          <div class="metric-value">${customerNumber}</div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">Customer Risk</div>
-          <div class="metric-value" style="color:${risk==="HIGH"?"var(--rose)":risk==="MEDIUM"?"var(--amber)":"var(--emerald)"}">
-            ${risk}
-          </div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">Watchlist Status</div>
-          <div class="metric-value" style="color:${watchlist==="MATCHED"?"var(--rose)":"var(--emerald)"}">
-            ${watchlist}
-          </div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">PEP Status</div>
-          <div class="metric-value">${isPep ? "ALERT MATCH" : "No"}</div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">Parents</div>
-          <div class="metric-value">
-            Father: ${father || "None"}<br>
-            Mother: ${mother || "None"}
-          </div>
-        </div>
-        <div class="metric-block">
-          <div class="metric-label">Narrative</div>
-          <div class="metric-value" style="font-family:sans-serif; color:var(--text-secondary); font-size:.75rem; line-height:1.4;">
-            ${narrative}
-          </div>
-        </div>
-      `;
+        <div class="metric-block" style="border-left:3px solid ${risk==="HIGH"?"var(--rose)":"var(--cyan)"}"><div class="metric-label">Customer Name</div><div class="metric-value">${displayName}</div></div>
+        <div class="metric-block"><div class="metric-label">Customer ID</div><div class="metric-value">${id}</div></div>
+        <div class="metric-block"><div class="metric-label">Customer Number</div><div class="metric-value">${customerNumber}</div></div>
+        <div class="metric-block"><div class="metric-label">Risk Level</div><div class="metric-value" style="color:${risk==="HIGH"?"var(--rose)":risk==="MEDIUM"?"var(--amber)":"var(--emerald)"}">${risk}</div></div>
+        <div class="metric-block"><div class="metric-label">Watchlist</div><div class="metric-value" style="color:${watchlist==="MATCHED"?"var(--rose)":"var(--emerald)"}">${watchlist}</div></div>
+        <div class="metric-block"><div class="metric-label">PEP Status</div><div class="metric-value">${isPep ? "Alert Match" : "No"}</div></div>
+        <div class="metric-block"><div class="metric-label">Parents</div><div class="metric-value">Father: ${father || "None"}<br>Mother: ${mother || "None"}</div></div>
+        <div class="metric-block"><div class="metric-label">Narrative</div><div class="metric-value prose">${narrative}</div></div>`;
       drawer.classList.add("open");
     }
 
@@ -715,8 +374,8 @@
       edgesDataset.clear();
       if (networkInstance) { networkInstance.destroy(); networkInstance = null; }
       closeInspectorDrawer();
-      document.getElementById('results-container').innerHTML = '<div class="empty-state">No search parameter models currently evaluated.</div>';
-      document.getElementById('select-all-wrapper').style.display = 'none';
+      document.getElementById('results-container').innerHTML = '<div class="empty-state">Search for a customer to see matching profiles.</div>';
+      document.getElementById('select-all-wrapper').classList.add('hidden');
       document.getElementById('search-input').value = '';
     }
   </script>
