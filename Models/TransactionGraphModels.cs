@@ -13,6 +13,8 @@ namespace RelationshipVisualizer.Models
         public string Group { get; set; } = null!;
         public string Title { get; set; } = null!;
         public string Shape { get; set; } = null!;
+
+        public string? TransactionType { get; set; }
     }
 
     public class TransactionGraphEdge

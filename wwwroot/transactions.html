@@ -21,6 +21,10 @@
       background: #f1f5f9;
     }
     
+    .canvas-toolbar {
+      display: none; /* Controlled dynamically by script */
+    }
+
     .view-container.light-mode .canvas-toolbar {
       background: #ffffff;
       border: 1px solid #cbd5e1;
@@ -66,7 +70,7 @@
     .view-container.light-mode + .table-view-panel,
     .view-container.light-mode ~ #tableReportPanel {
       background: #ffffff;
-      border-top: 1px solid #cbd5e1;
+      border: 1px solid #cbd5e1;
     }
     
     .view-container.light-mode ~ #tableReportPanel .panel-header-actions {
@@ -97,14 +101,25 @@
       position: relative;
       overflow: hidden;
     }
+
+    /* =========================================================================
+       FIXED ATTACHMENT WITH DRAG/RESIZE MATRIX INTERACTION
+       ========================================================================= */
     .table-view-panel {
-      border-top: 1px solid #1e293b;
-      background: #0b0f17;
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      width: 100%;
       height: 280px;
+      min-height: 120px;
+      max-height: 80%;
+      background: #0b0f17;
+      border-top: 2px solid #1e293b;
+      box-shadow: 0 -10px 25px -5px rgba(0,0,0,0.4);
       display: none;
       flex-direction: column;
-      z-index: 10;
-      width: 100%;
+      z-index: 1000;
+      overflow: hidden;
     }
     .table-view-panel.active {
       display: flex;
@@ -113,40 +128,104 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem 1rem;
+      padding: 0.65rem 1rem;
       background: #0f172a;
       border-bottom: 1px solid #1e293b;
+      cursor: ns-resize;
+      user-select: none;
     }
     .table-scroll-frame {
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: auto;
       flex-grow: 1;
     }
+    
+    /* Strict Width Column Fit Alignment Rules */
     .report-grid-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 11px;
       text-align: left;
+      table-layout: fixed;
     }
     .report-grid-table th {
       background: #111827;
       color: #94a3b8;
-      padding: 10px;
+      padding: 8px 6px;
       position: sticky;
       top: 0;
       border-bottom: 2px solid #1e293b;
       font-weight: 600;
+      z-index: 5;
+      text-overflow: ellipsis;
+      overflow: visible;
+      white-space: nowrap;
     }
+    
+    /* Interactive Column Resize Gripper Handles */
+    .col-resize-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      z-index: 10;
+      transition: background 0.1s ease;
+    }
+    .col-resize-handle:hover,
+    .col-resize-handle.resizing {
+      background: #06b6d4;
+    }
+
     .report-grid-table td {
-      padding: 10px;
+      padding: 8px 6px;
       border-bottom: 1px solid #1e293b;
       color: #cbd5e1;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
     }
+    
+    /* Configured Column Standard Ratio Blueprints */
+    .report-grid-table th:nth-child(1) { width: 80px; }
+    .report-grid-table th:nth-child(2) { width: 80px; }
+    .report-grid-table th:nth-child(3) { width: 90px; }
+    .report-grid-table th:nth-child(4) { width: 150px; }
+    .report-grid-table th:nth-child(5) { width: 90px; }
+    .report-grid-table th:nth-child(6) { width: 140px; }
+    .report-grid-table th:nth-child(7) { width: 100px; }
+    .report-grid-table th:nth-child(8) { width: 100px; }
+    .report-grid-table th:nth-child(9) { width: 90px; }
+
     .report-grid-table tr:hover {
       background: #1e293b;
     }
     .report-grid-table tr.hidden-row {
       display: none !important;
     }
+
+    /* Unified Dark Scrollbars */
+    .table-scroll-frame::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .table-scroll-frame::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .table-scroll-frame::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    .table-scroll-frame::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+    .table-scroll-frame {
+      scrollbar-width: thin;
+      scrollbar-color: #1e293b #0f172a;
+    }
+
     .select-dropdown {
       width: 100%;
       background: #0f172a;
@@ -161,7 +240,6 @@
       border-color: #3b82f6;
     }
     
-    /* Toolbar Toggle Elements & Custom Scrollbar Customizations */
     .toolbar-toggle-wrapper {
       display: flex;
       align-items: center;
@@ -340,6 +418,10 @@
               <span>Sender Account</span>
             </div>
             <div class="legend-item">
+              <div class="legend-indicator" style="background:#d946ef;border:1px solid #a21caf;border-radius:50%;"></div>
+              <span>Self-Transfer Hub</span>
+            </div>
+            <div class="legend-item">
               <div class="legend-indicator" style="background:#f59e0b;border:1px solid #b45309;"></div>
               <span>Transaction</span>
             </div>
@@ -366,15 +448,15 @@
         </div>
 
         <div id="tableReportPanel" class="table-view-panel">
-          <div class="panel-header-actions">
+          <div id="tableReportHeaderHandle" class="panel-header-actions">
             <div style="display:flex; align-items:center; gap:0.5rem;">
               <span class="section-label" style="margin:0;color:#94a3b8;" id="tablePanelMainTitle">Granular Transaction Record Audit</span>
               <span id="tableFilterIndicator" style="font-size:11px; color:#e2e8f0; background:#1e293b; padding:2px 6px; border-radius:4px; display:none;"></span>
             </div>
-            <button class="close-inspector" style="position:static;padding:0;line-height:1;" onclick="toggleReportTablePanel()">×</button>
+            <button class="close-inspector" style="position:static;padding:0;line-height:1;background:transparent;border:none;color:#94a3b8;font-size:20px;cursor:pointer;" onclick="toggleReportTablePanel()">×</button>
           </div>
           <div class="table-scroll-frame">
-            <table class="report-grid-table">
+            <table class="report-grid-table" id="resizableReportTable">
               <thead>
                 <tr>
                   <th>Ref Number</th>
@@ -402,118 +484,114 @@
 
   <div id="toastNotification" class="toast"><span id="toastMessage">Done.</span></div>
 
-<script>
-  let networkInstance = null;
-  let physicsEnabled = true;
-  let filtersExpanded = true;
-  let tablePanelExpanded = false;
-  let nodeTooltipMap = {};
-  let toastTimer = null;
-  let branchNameLookup = {};
+  <script>
+    let networkInstance = null;
+    let physicsEnabled = true;
+    let filtersExpanded = true;
+    let tablePanelExpanded = false;
+    let nodeTooltipMap = {};
+    let toastTimer = null;
 
-  const GROUP_COLORS = {
-    Sender: '#4f46e5', Beneficiary: '#10b981', Transaction: '#f59e0b',
-    Customer: '#0ea5e9', UnknownBeneficiary: '#0f172a'
-  };
+    const GROUP_COLORS = {
+      Sender: '#4f46e5', SelfTransferHub: '#d946ef', Beneficiary: '#10b981', 
+      Transaction: '#f59e0b', Customer: '#0ea5e9', UnknownBeneficiary: '#0f172a'
+    };
 
-  function toggleFiltersPanel() {
-    filtersExpanded = !filtersExpanded;
-    document.getElementById('filtersBody').style.display = filtersExpanded ? '' : 'none';
-    document.getElementById('filtersChevron').style.transform = filtersExpanded ? '' : 'rotate(-90deg)';
-  }
-
-  function toggleReportTablePanel() {
-    tablePanelExpanded = !tablePanelExpanded;
-    const panel = document.getElementById('tableReportPanel');
-    const btn = document.getElementById('btnToggleTable');
-    if (tablePanelExpanded) {
-      panel.classList.add('active');
-      btn.textContent = 'Hide Data Table';
-    } else {
-      panel.classList.remove('active');
-      btn.textContent = 'Show Data Table';
+    function toggleFiltersPanel() {
+      filtersExpanded = !filtersExpanded;
+      document.getElementById('filtersBody').style.display = filtersExpanded ? '' : 'none';
+      document.getElementById('filtersChevron').style.transform = filtersExpanded ? '' : 'rotate(-90deg)';
     }
-  }
 
-  function toggleCanvasTheme(toggleInput) {
-    const frame = document.getElementById('canvasViewportFrame');
-    const iconContainer = document.getElementById('themeToggleIcon');
-    const isLightMode = toggleInput.checked;
-    const titleText = document.getElementById('tablePanelMainTitle');
-    
-    if (isLightMode) {
-      frame.classList.add('light-mode');
-      if (titleText) titleText.style.color = '#475569';
+    function toggleReportTablePanel() {
+      tablePanelExpanded = !tablePanelExpanded;
+      const panel = document.getElementById('tableReportPanel');
+      const btn = document.getElementById('btnToggleTable');
+      if (tablePanelExpanded) {
+        panel.classList.add('active');
+        btn.textContent = 'Hide Data Table';
+      } else {
+        panel.classList.remove('active');
+        btn.textContent = 'Show Data Table';
+      }
+    }
+
+    function toggleCanvasTheme(toggleInput) {
+      const frame = document.getElementById('canvasViewportFrame');
+      const iconContainer = document.getElementById('themeToggleIcon');
+      const isLightMode = toggleInput.checked;
+      const titleText = document.getElementById('tablePanelMainTitle');
       
-      // Swap to your sun icon structure when checkbox is checked (Light Mode Active)
-      iconContainer.innerHTML = `
-        <circle cx="12" cy="12" r="5"></circle>
-        <line x1="12" y1="1" x2="12" y2="3.5"></line>
-        <line x1="12" y1="20.5" x2="12" y2="23"></line>
-        <line x1="4.22" y1="4.22" x2="6" y2="6"></line>
-        <line x1="18" y1="18" x2="19.78" y2="19.78"></line>
-        <line x1="1" y1="12" x2="3.5" y2="12"></line>
-        <line x1="20.5" y1="12" x2="23" y2="12"></line>
-        <line x1="4.22" y1="19.78" x2="6" y2="18"></line>
-        <line x1="18" y1="6" x2="19.78" y2="4.22"></line>
-      `;
-    } else {
-      frame.classList.remove('light-mode');
-      if (titleText) titleText.style.color = '#94a3b8';
-      
-      // Swap back to your crescent moon path when unchecked (Dark Mode Active)
-      iconContainer.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+      if (isLightMode) {
+        frame.classList.add('light-mode');
+        if (titleText) titleText.style.color = '#475569';
+        
+        iconContainer.innerHTML = `
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3.5"></line>
+          <line x1="12" y1="20.5" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="6" y2="6"></line>
+          <line x1="18" y1="18" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3.5" y2="12"></line>
+          <line x1="20.5" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="6" y2="18"></line>
+          <line x1="18" y1="6" x2="19.78" y2="4.22"></line>
+        `;
+      } else {
+        frame.classList.remove('light-mode');
+        if (titleText) titleText.style.color = '#94a3b8';
+        
+        iconContainer.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+      }
+
+      if (networkInstance) {
+        const labelColor = isLightMode ? '#1e293b' : '#94a3b8';
+        const edgeBgColor = isLightMode ? '#f1f5f9' : '#080b11';
+        const edgeLineColor = isLightMode ? '#94a3b8' : '#26334d';
+
+        networkInstance.setOptions({
+          nodes: {
+            font: { color: labelColor }
+          },
+          edges: {
+            color: { color: edgeLineColor },
+            font: { background: edgeBgColor }
+          }
+        });
+      }
     }
 
-    if (networkInstance) {
-      const labelColor = isLightMode ? '#1e293b' : '#94a3b8';
-      const edgeBgColor = isLightMode ? '#f1f5f9' : '#080b11';
-      const edgeLineColor = isLightMode ? '#94a3b8' : '#26334d';
-
-      networkInstance.setOptions({
-        nodes: {
-          font: { color: labelColor }
-        },
-        edges: {
-          color: { color: edgeLineColor },
-          font: { background: edgeBgColor }
-        }
-      });
+    function onFilterChange() {
+      const values = [
+        document.getElementById('startDate').value,
+        document.getElementById('endDate').value,
+        document.getElementById('minAmount').value,
+        document.getElementById('maxAmount').value,
+        document.getElementById('branchFilter').value,
+        document.getElementById('typeFilter').value,
+        document.getElementById('latestOnlyToggle').checked
+      ];
+      const activeCount = values.filter(Boolean).length;
+      const badge = document.getElementById('activeFilterBadge');
+      badge.textContent = `${activeCount} active`;
+      badge.classList.toggle('hidden', activeCount === 0);
     }
-  }
 
-  function onFilterChange() {
-    const values = [
-      document.getElementById('startDate').value,
-      document.getElementById('endDate').value,
-      document.getElementById('minAmount').value,
-      document.getElementById('maxAmount').value,
-      document.getElementById('branchFilter').value,
-      document.getElementById('typeFilter').value,
-      document.getElementById('latestOnlyToggle').checked
-    ];
-    const activeCount = values.filter(Boolean).length;
-    const badge = document.getElementById('activeFilterBadge');
-    badge.textContent = `${activeCount} active`;
-    badge.classList.toggle('hidden', activeCount === 0);
-  }
+    function clearAllFilters() {
+      ['startDate','endDate','minAmount','maxAmount','branchFilter','typeFilter'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('latestOnlyToggle').checked = false;
+      onFilterChange();
+    }
 
-  function clearAllFilters() {
-    ['startDate','endDate','minAmount','maxAmount','branchFilter','typeFilter'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('latestOnlyToggle').checked = false;
-    onFilterChange();
-  }
+    function populateBranchFilterOptions(branches) {
+      const select = document.getElementById('branchFilter');
+      const previousValue = select.value;
+      const list = Array.isArray(branches) ? branches : [];
 
-  async function loadBranchOptions() {
-    const select = document.getElementById('branchFilter');
-    try {
-      const response = await fetch('/Transaction/GetBranches');
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-      const payload = await response.json();
-      const branches = Array.isArray(payload) ? payload : [];
+      select.innerHTML = '<option value="">All Branches</option>';
 
       const seenNames = new Set();
-      const uniqueSorted = branches
+      const uniqueSorted = list
         .filter(b => {
           const name = b.name ?? b.Name;
           if (!name || seenNames.has(name)) return false;
@@ -525,27 +603,25 @@
       uniqueSorted.forEach(b => {
         const id = b.branchId ?? b.BranchId;
         const name = b.name ?? b.Name;
-        branchNameLookup[id] = name;
         const opt = document.createElement('option');
         opt.value = id;
         opt.textContent = name;
         select.appendChild(opt);
       });
-    } catch (err) {
-      console.error('Failed to load branch list', err);
-      showToast('Could not load branch filter options.');
+
+      select.value = Array.from(select.options).some(o => o.value === previousValue) ? previousValue : '';
     }
-  }
 
-  async function loadTransactionTypeOptions() {
-    const select = document.getElementById('typeFilter');
-    try {
-      const response = await fetch('/Transaction/GetTransactionTypes');
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-      const payload = await response.json();
-      const types = Array.isArray(payload) ? payload : [];
+    function populateTransactionTypeFilterOptions(types) {
+      const select = document.getElementById('typeFilter');
+      const previousValue = select.value;
+      const list = Array.isArray(types) ? types : [];
 
-      const sorted = types.slice().sort((a, b) => (a.name ?? a.Name).localeCompare(b.name ?? b.Name));
+      select.innerHTML = '<option value="">All Types</option>';
+
+      const sorted = list
+        .slice()
+        .sort((a, b) => (a.name ?? a.Name).localeCompare(b.name ?? b.Name));
 
       sorted.forEach(t => {
         const code = t.code ?? t.Code;
@@ -555,371 +631,507 @@
         opt.textContent = name;
         select.appendChild(opt);
       });
-    } catch (err) {
-      console.error('Failed to load transaction type list', err);
-      showToast('Could not load transaction type filter options.');
+
+      select.value = Array.from(select.options).some(o => o.value === previousValue) ? previousValue : '';
     }
-  }
 
-  async function executeAccountLookup() {
-    const query = document.getElementById('searchQuery').value.trim();
-    const container = document.getElementById('searchResultsContainer');
-    const selectAll = document.getElementById('selectAllCheckbox');
-    const badge = document.getElementById('resultCountBadge');
+    async function executeAccountLookup() {
+      const query = document.getElementById('searchQuery').value.trim();
+      const container = document.getElementById('searchResultsContainer');
+      const selectAll = document.getElementById('selectAllCheckbox');
+      const badge = document.getElementById('resultCountBadge');
 
-    if (!query) { renderEmptyState(container, 'Please enter a customer name to search.'); return; }
+      if (!query) { renderEmptyState(container, 'Please enter a customer name to search.'); return; }
 
-    container.innerHTML = '<div class="empty-state">Searching accounts…</div>';
+      container.innerHTML = '<div class="empty-state">Searching accounts…</div>';
 
-    try {
-      const response = await fetch(`/Transaction/SearchAccounts?query=${encodeURIComponent(query)}`);
-      const foundAccountsList = await response.json();
+      try {
+        const response = await fetch(`/Transaction/SearchAccounts?query=${encodeURIComponent(query)}`);
+        const foundAccountsList = await response.json();
 
-      if (foundAccountsList.length === 0) {
-        selectAll.checked = false; selectAll.disabled = true;
-        badge.classList.add('hidden');
-        renderEmptyState(container, 'No accounts matched that search term.');
-        updateVisualizeButtonState();
-        return;
-      }
+        if (foundAccountsList.length === 0) {
+          selectAll.checked = false; selectAll.disabled = true;
+          badge.classList.add('hidden');
+          renderEmptyState(container, 'No accounts matched that search term.');
+          updateVisualizeButtonState();
+          return;
+        }
 
-      selectAll.disabled = false; selectAll.checked = false;
-      badge.textContent = foundAccountsList.length;
-      badge.classList.remove('hidden');
+        selectAll.disabled = false; selectAll.checked = false;
+        badge.textContent = foundAccountsList.length;
+        badge.classList.remove('hidden');
 
-      let html = '<div class="results-inner">';
-      foundAccountsList.forEach(acc => {
-        const num = acc.accountNumber || acc.AccountNumber;
-        const name = acc.accountName || acc.AccountName;
-        const role = acc.role || acc.Role || 'Account';
-        html += `<label class="account-card">
-          <input type="checkbox" value="${num}" onchange="updateVisualizeButtonState()" class="account-item-checkbox">
-          <div class="meta-stack">
-            <span class="entity-title">${name}</span>
-            <div class="title-row" style="margin-top:4px;">
-              <span class="mono-text">${num}</span>
-              <span class="pill role">${role}</span>
+        let html = '<div class="results-inner">';
+        foundAccountsList.forEach(acc => {
+          const num = acc.accountNumber || acc.AccountNumber;
+          const name = acc.accountName || acc.AccountName;
+          const role = acc.role || acc.Role || 'Account';
+          html += `<label class="account-card">
+            <input type="checkbox" value="${num}" onchange="updateVisualizeButtonState()" class="account-item-checkbox">
+            <div class="meta-stack">
+              <span class="entity-title">${name}</span>
+              <div class="title-row" style="margin-top:4px;">
+                <span class="mono-text">${num}</span>
+                <span class="pill role">${role}</span>
+              </div>
             </div>
-          </div>
-        </label>`;
-      });
-      html += '</div>';
-      container.innerHTML = html;
-      updateVisualizeButtonState();
-    } catch (err) {
-      container.innerHTML = '<div class="empty-state error">Search failed — check the console.</div>';
-      console.error(err);
-    }
-  }
-
-  function renderEmptyState(container, msg) {
-    container.innerHTML = `<div class="empty-state">${msg}</div>`;
-  }
-
-  function toggleSelectAllMatches(cb) {
-    document.querySelectorAll('.account-item-checkbox').forEach(b => b.checked = cb.checked);
-    updateVisualizeButtonState();
-  }
-
-  function clearSelections() {
-    document.querySelectorAll('.account-item-checkbox').forEach(b => b.checked = false);
-    const sa = document.getElementById('selectAllCheckbox');
-    sa.checked = false; sa.indeterminate = false;
-    updateVisualizeButtonState();
-  }
-
-  function updateVisualizeButtonState() {
-    const checked = document.querySelectorAll('.account-item-checkbox:checked');
-    const total = document.querySelectorAll('.account-item-checkbox');
-    const btn = document.getElementById('btnVisualize');
-    const sa = document.getElementById('selectAllCheckbox');
-
-    document.getElementById('selectedCount').textContent = checked.length;
-    document.getElementById('btnClearSel').classList.toggle('hidden', checked.length === 0);
-
-    if (total.length > 0) {
-      sa.indeterminate = checked.length > 0 && checked.length < total.length;
-      if (!sa.indeterminate) sa.checked = checked.length === total.length && total.length > 0;
-    }
-
-    const active = checked.length > 0;
-    btn.disabled = !active;
-    btn.className = active ? 'btn-full' : 'btn-secondary btn-full';
-  }
-
-  function handleToggleShortcutRefresh() {
-    if (document.querySelectorAll('.account-item-checkbox:checked').length > 0) loadTransactionNetworkGraph();
-  }
-
-  async function loadTransactionNetworkGraph() {
-    const checkedBoxes = document.querySelectorAll('.account-item-checkbox:checked');
-    if (!checkedBoxes.length) return;
-
-    const params = new URLSearchParams({
-      startDate: document.getElementById('startDate').value,
-      endDate: document.getElementById('endDate').value,
-      minAmount: document.getElementById('minAmount').value,
-      maxAmount: document.getElementById('maxAmount').value,
-      branchId: document.getElementById('branchFilter').value,
-      transactionType: document.getElementById('typeFilter').value,
-      latestOnly: document.getElementById('latestOnlyToggle').checked
-    });
-    checkedBoxes.forEach(b => params.append('accounts', b.value));
-
-    const overlay = document.getElementById('canvasLoadingOverlay');
-    overlay.style.display = 'flex';
-    resetTableFilters();
-
-    try {
-      const response = await fetch(`/Transaction/GetGraphData?${params}`);
-      const rawData = await response.json();
-
-      if (!response.ok) {
-        showToast(rawData.message || 'Graph generation error');
-        return;
-      }
-
-      const tableData = rawData.tableReportData || rawData.TableReportData || rawData.reportData || rawData.ReportData || [];
-      populateReportTable(tableData);
-
-      if (!rawData.nodes?.length) {
-        document.getElementById('canvasEmptyState').style.display = 'flex';
-        showToast('No graph data for the selected filters.');
-        return;
-      }
-
-      document.getElementById('canvasEmptyState').style.display = 'none';
-      nodeTooltipMap = {};
-      const visNodes = []; const seenNodes = new Set(); let txnCount = 0;
-
-      rawData.nodes.forEach(node => {
-        const id = node.id ?? node.Id;
-        const label = node.label ?? node.Label ?? '';
-        let group = node.group ?? node.Group;
-        const title = node.title ?? node.Title ?? '';
-        if (seenNodes.has(id)) return;
-        seenNodes.add(id);
-        if (group === 'Beneficiary' && label.toLowerCase().includes('unknown')) group = 'UnknownBeneficiary';
-        if (group === 'Transaction') txnCount++;
-        nodeTooltipMap[id] = { html: title, group, label };
-        let titleEl = title;
-        if (title && title.includes('<div')) { const w = document.createElement('div'); w.innerHTML = title; titleEl = w; }
-        visNodes.push({ id, label, title: titleEl, group, shape: node.shape ?? node.Shape ?? 'dot' });
-      });
-
-      const visEdges = []; const seenEdges = new Set();
-      rawData.edges.forEach((edge, i) => {
-        const id = edge.id ?? edge.Id;
-        const finalId = seenEdges.has(id) ? `${id}_dup_${i}` : id;
-        seenEdges.add(finalId);
-        visEdges.push({
-          id: finalId, from: edge.from ?? edge.From, to: edge.to ?? edge.To,
-          label: edge.label ?? edge.Label ?? ''
+          </label>`;
         });
+        html += '</div>';
+        container.innerHTML = html;
+        updateVisualizeButtonState();
+      } catch (err) {
+        container.innerHTML = '<div class="empty-state error">Search failed — check the console.</div>';
+        console.error(err);
+      }
+    }
+
+    function renderEmptyState(container, msg) {
+      container.innerHTML = `<div class="empty-state">${msg}</div>`;
+    }
+
+    function toggleSelectAllMatches(cb) {
+      document.querySelectorAll('.account-item-checkbox').forEach(b => b.checked = cb.checked);
+      updateVisualizeButtonState();
+    }
+
+    function clearSelections() {
+      document.querySelectorAll('.account-item-checkbox').forEach(b => b.checked = false);
+      const sa = document.getElementById('selectAllCheckbox');
+      sa.checked = false; sa.indeterminate = false;
+      updateVisualizeButtonState();
+    }
+
+    function updateVisualizeButtonState() {
+      const checked = document.querySelectorAll('.account-item-checkbox:checked');
+      const total = document.querySelectorAll('.account-item-checkbox');
+      const btn = document.getElementById('btnVisualize');
+      const sa = document.getElementById('selectAllCheckbox');
+
+      document.getElementById('selectedCount').textContent = checked.length;
+      document.getElementById('btnClearSel').classList.toggle('hidden', checked.length === 0);
+
+      if (total.length > 0) {
+        sa.indeterminate = checked.length > 0 && checked.length < total.length;
+        if (!sa.indeterminate) sa.checked = checked.length === total.length && total.length > 0;
+      }
+
+      const active = checked.length > 0;
+      btn.disabled = !active;
+      btn.className = active ? 'btn-full' : 'btn-secondary btn-full';
+    }
+
+    function handleToggleShortcutRefresh() {
+      if (document.querySelectorAll('.account-item-checkbox:checked').length > 0) loadTransactionNetworkGraph();
+    }
+
+    async function loadTransactionNetworkGraph() {
+      const checkedBoxes = document.querySelectorAll('.account-item-checkbox:checked');
+      if (!checkedBoxes.length) return;
+
+      const typeFilterVal = document.getElementById('typeFilter').value;
+
+      const params = new URLSearchParams({
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        minAmount: document.getElementById('minAmount').value,
+        maxAmount: document.getElementById('maxAmount').value,
+        branchId: document.getElementById('branchFilter').value,
+        transactionType: typeFilterVal,
+        latestOnly: document.getElementById('latestOnlyToggle').checked
       });
+      checkedBoxes.forEach(b => params.append('accounts', b.value));
 
-      const isLightMode = document.getElementById('canvasThemeToggle').checked;
-      const initialLabelColor = isLightMode ? '#1e293b' : '#94a3b8';
-      const initialEdgeBgColor = isLightMode ? '#f1f5f9' : '#080b11';
-      const initialEdgeLineColor = isLightMode ? '#94a3b8' : '#26334d';
+      const overlay = document.getElementById('canvasLoadingOverlay');
+      overlay.style.display = 'flex';
+      resetTableFilters();
 
-      const options = {
-        nodes: { borderWidth: 2, font: { size: 11, color: initialLabelColor, face: 'Segoe UI', vadjust: 26 } },
-        edges: {
-          arrows: { to: { enabled: true, scaleFactor: 0.75 } },
-          color: { color: initialEdgeLineColor, highlight: '#06b6d4', hover: '#3b82f6' },
-          smooth: { enabled: true, type: 'cubicBezier', roundness: 0.4 },
-          width: 1.5,
-          font: { align: 'horizontal', size: 10, color: '#64748b', background: initialEdgeBgColor }
-        },
-        groups: {
-          Sender: { shape: 'dot', size: 20, color: { background: '#4f46e5', border: '#4338ca', highlight: { background: '#818cf8', border: '#4338ca' } } },
-          Beneficiary: { shape: 'dot', size: 20, color: { background: '#10b981', border: '#047857', highlight: { background: '#34d399', border: '#047857' } } },
-          UnknownBeneficiary: { shape: 'dot', size: 20, color: { background: '#0f172a', border: '#020617', highlight: { background: '#334155', border: '#020617' } } },
-          Transaction: { shape: 'diamond', size: 14, color: { background: '#f59e0b', border: '#b45309', highlight: { background: '#fbbf24', border: '#b45309' } }, font: { vadjust: 22, size: 10, color: '#f59e0b', face: 'monospace' } },
-          Customer: { shape: 'dot', size: 20, color: { background: '#0ea5e9', border: '#0369a1', highlight: { background: '#38bdf8', border: '#0369a1' } } }
-        },
-        physics: { enabled: true, barnesHut: { gravitationalConstant: -2500, centralGravity: 0.2, springLength: 140, springConstant: 0.04 }, stabilization: { iterations: 200, updateInterval: 25 } },
-        interaction: { hover: true, tooltipDelay: 150, navigationButtons: false }
-      };
+      try {
+        const response = await fetch(`/Transaction/GetGraphData?${params}`);
+        const rawData = await response.json();
 
-      if (networkInstance) networkInstance.destroy();
-      networkInstance = new vis.Network(
-        document.getElementById('visualNetworkCanvas'),
-        { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
-        options
-      );
-      physicsEnabled = true;
-      syncPhysicsButton();
+        if (!response.ok) {
+          showToast(rawData.message || 'Graph generation error');
+          return;
+        }
 
-      networkInstance.on('stabilizationIterationsDone', () => {
-        networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
-        setGraphStats(visNodes.length, visEdges.length, txnCount);
+        const tableData = rawData.tableReportData || rawData.TableReportData || rawData.reportData || rawData.ReportData || [];
+        populateReportTable(tableData);
+
+        const activeBranches = rawData.activeBranches || rawData.ActiveBranches || [];
+        const activeTypes = rawData.activeTransactionTypes || rawData.ActiveTransactionTypes || [];
+        populateBranchFilterOptions(activeBranches);
+        populateTransactionTypeFilterOptions(activeTypes);
+
+        if (!rawData.nodes?.length) {
+          document.getElementById('canvasEmptyState').style.display = 'flex';
+          showToast('No graph data for the selected filters.');
+          return;
+        }
+
+        let nodesToRender = rawData.nodes;
+        let edgesToRender = rawData.edges || [];
+
+        if (typeFilterVal) {
+          const matchedTxnNodeIds = new Set();
+          
+          rawData.nodes.forEach(n => {
+            const grp = n.group ?? n.Group;
+            const lbl = n.label ?? n.Label ?? '';
+            if (grp === 'Transaction' && lbl.toLowerCase() === typeFilterVal.toLowerCase()) {
+              matchedTxnNodeIds.add(n.id ?? n.Id);
+            }
+          });
+
+          const validEdgeIds = new Set();
+          const linkedAccountNodeIds = new Set();
+
+          edgesToRender.forEach(e => {
+            const fromId = e.from ?? e.From;
+            const toId = e.to ?? e.To;
+
+            if (matchedTxnNodeIds.has(fromId) || matchedTxnNodeIds.has(toId)) {
+              linkedAccountNodeIds.add(fromId);
+              linkedAccountNodeIds.add(toId);
+              validEdgeIds.add(e.id ?? e.Id);
+            }
+          });
+
+          nodesToRender = rawData.nodes.filter(n => {
+            const nid = n.id ?? n.Id;
+            const group = n.group ?? n.Group;
+            if (group === 'Transaction') return matchedTxnNodeIds.has(nid);
+            return linkedAccountNodeIds.has(nid);
+          });
+
+          edgesToRender = edgesToRender.filter(e => validEdgeIds.has(e.id ?? e.Id));
+        }
+
+        if (nodesToRender.length === 0) {
+          document.getElementById('canvasEmptyState').style.display = 'flex';
+          if (networkInstance) networkInstance.destroy();
+          setToolbarVisible(false);
+          showToast('No canvas entities matched this explicit Type criteria.');
+          return;
+        }
+
+        document.getElementById('canvasEmptyState').style.display = 'none';
+        nodeTooltipMap = {};
+        const visNodes = []; const seenNodes = new Set(); let txnCount = 0;
+
+        nodesToRender.forEach(node => {
+          const id = node.id ?? node.Id;
+          const label = node.label ?? node.Label ?? '';
+          let group = node.group ?? node.Group;
+          const title = node.title ?? node.Title ?? '';
+          if (seenNodes.has(id)) return;
+          seenNodes.add(id);
+          if (group === 'Beneficiary' && label.toLowerCase().includes('unknown')) group = 'UnknownBeneficiary';
+          if (group === 'Transaction') txnCount++;
+          nodeTooltipMap[id] = { html: title, group, label };
+          let titleEl = title;
+          if (title && title.includes('<div')) { const w = document.createElement('div'); w.innerHTML = title; titleEl = w; }
+          visNodes.push({ id, label, title: titleEl, group, shape: node.shape ?? node.Shape ?? 'dot' });
+        });
+
+        // =========================================================================
+        // ENFORCE STRUCTURAL VECTOR PIPELINE: Native backend directions handle standard layout
+        // =========================================================================
+        const visEdges = []; const seenEdges = new Set();
+        
+        edgesToRender.forEach((edge, i) => {
+          let ef = String(edge.from ?? edge.From);
+          let et = String(edge.to ?? edge.To);
+          const edgeId = edge.id ?? edge.Id;
+          
+          // Generate an explicitly unique identifier to track layered sequential vectors separately
+          const finalId = `edge_instance_${edgeId}_${i}`;
+
+          visEdges.push({
+            id: finalId, 
+            from: ef, 
+            to: et,
+            label: edge.label ?? edge.Label ?? ''
+          });
+        });
+
+        const isLightMode = document.getElementById('canvasThemeToggle').checked;
+        const initialLabelColor = isLightMode ? '#1e293b' : '#94a3b8';
+        const initialEdgeBgColor = isLightMode ? '#f1f5f9' : '#080b11';
+        const initialEdgeLineColor = isLightMode ? '#94a3b8' : '#26334d';
+
+        const options = {
+          nodes: { borderWidth: 2, font: { size: 11, color: initialLabelColor, face: 'Segoe UI', vadjust: 26 } },
+          edges: {
+            arrows: { to: { enabled: true, scaleFactor: 0.75 } },
+            color: { color: initialEdgeLineColor, highlight: '#06b6d4', hover: '#3b82f6' },
+            smooth: { enabled: true, type: 'cubicBezier', roundness: 0.4 },
+            width: 1.5,
+            font: { align: 'horizontal', size: 10, color: '#64748b', background: initialEdgeBgColor }
+          },
+          groups: {
+            Sender: { shape: 'dot', size: 20, color: { background: '#4f46e5', border: '#4338ca', highlight: { background: '#818cf8', border: '#4338ca' } } },
+            SelfTransferHub: { shape: 'dot', size: 24, color: { background: '#d946ef', border: '#a21caf', highlight: { background: '#f5d0fe', border: '#a21caf' } } },
+            Beneficiary: { shape: 'dot', size: 20, color: { background: '#10b981', border: '#047857', highlight: { background: '#34d399', border: '#047857' } } },
+            UnknownBeneficiary: { shape: 'dot', size: 20, color: { background: '#0f172a', border: '#020617', highlight: { background: '#334155', border: '#020617' } } },
+            Transaction: { shape: 'diamond', size: 14, color: { background: '#f59e0b', border: '#b45309', highlight: { background: '#fbbf24', border: '#b45309' } }, font: { vadjust: 22, size: 10, color: '#f59e0b', face: 'monospace' } },
+            Customer: { shape: 'dot', size: 20, color: { background: '#0ea5e9', border: '#0369a1', highlight: { background: '#38bdf8', border: '#0369a1' } } }
+          },
+          physics: { enabled: true, barnesHut: { gravitationalConstant: -2500, centralGravity: 0.2, springLength: 140, springConstant: 0.04 }, stabilization: { iterations: 200, updateInterval: 25 } },
+          interaction: { hover: true, tooltipDelay: 150, navigationButtons: false }
+        };
+
+        if (networkInstance) networkInstance.destroy();
+        networkInstance = new vis.Network(
+          document.getElementById('visualNetworkCanvas'),
+          { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
+          options
+        );
+        physicsEnabled = true;
+        syncPhysicsButton();
+
+        networkInstance.on('stabilizationIterationsDone', () => {
+          networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+          setGraphStats(visNodes.length, visEdges.length, txnCount);
+        });
+        
+        networkInstance.on('click', params => {
+          if (params.nodes.length > 0) {
+            const selectedNodeId = params.nodes[0];
+            filterReportTableByNode(selectedNodeId);
+          } else {
+            resetTableFilters();
+          }
+        });
+        
+        networkInstance.on('doubleClick', params => {
+          if (params.nodes.length > 0) networkInstance.focus(params.nodes[0], { scale: 2, animation: { duration: 400 } });
+        });
+
+        setToolbarVisible(true);
+        showToast(`Loaded ${visNodes.length} nodes · ${txnCount} transactions`);
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to render graph.');
+      } finally {
+        overlay.style.display = 'none';
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function populateReportTable(dataArray) {
+      const tbody = document.getElementById('tableReportRows');
+      if (!dataArray || dataArray.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No results match the specified criteria.</td></tr>`;
+        return;
+      }
+
+      let rowsHtml = '';
+      dataArray.forEach(row => {
+        const refNumber = row.referenceNumber || row.ReferenceNumber || row.refNumber || row.RefNumber || row.id || row.Id || 'N/A';
+        const txnDate = row.date || row.Date || row.transactionDate || row.TransactionDate || 'N/A';
+        const txnType = row.type || row.Type || row.transactionType || row.TransactionType || 'N/A';
+        const senderName = row.senderName || row.SenderName || row.accountName || row.AccountName || 'N/A';
+        const senderAcc = row.senderAccount || row.SenderAccount || row.accountNumber || row.AccountNumber || 'N/A';
+        const beneficiaryName = row.beneficiaryName || row.BeneficiaryName || 'N/A';
+        const beneficiaryAcc = row.beneficiaryAccount || row.BeneficiaryAccount || 'N/A';
+        const branch = row.branchId || row.BranchId || row.branchReference || row.BranchReference || 'N/A';
+        const amount = row.amount || row.Amount || '0.00';
+
+        rowsHtml += `<tr data-ref="${escapeHtml(refNumber)}" data-sender="${escapeHtml(senderAcc)}" data-beneficiary="${escapeHtml(beneficiaryAcc)}">
+          <td style="font-family:monospace;color:#fbbf24;" title="${escapeHtml(refNumber)}">${escapeHtml(refNumber)}</td>
+          <td title="${escapeHtml(txnDate)}">${escapeHtml(txnDate)}</td>
+          <td><span class="pill role" style="background:#1e293b;color:#cbd5e1;" title="${escapeHtml(txnType)}">${escapeHtml(txnType)}</span></td>
+          <td title="${escapeHtml(senderName)}">${escapeHtml(senderName)}</td>
+          <td style="font-family:monospace;" title="${escapeHtml(senderAcc)}">${escapeHtml(senderAcc)}</td>
+          <td title="${escapeHtml(beneficiaryName)}">${escapeHtml(beneficiaryName)}</td>
+          <td style="font-family:monospace;" title="${escapeHtml(beneficiaryAcc)}">${escapeHtml(beneficiaryAcc)}</td>
+          <td title="${escapeHtml(branch)}">${escapeHtml(branch)}</td>
+          <td style="text-align:right;font-weight:600;color:#10b981;" title="${escapeHtml(amount)}">${escapeHtml(amount)}</td>
+        </tr>`;
       });
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function filterReportTableByNode(nodeId) {
+      const nodeMeta = nodeTooltipMap[nodeId];
+      if (!nodeMeta) return;
+
+      const rows = document.querySelectorAll('#tableReportRows tr');
+      const indicator = document.getElementById('tableFilterIndicator');
       
-      networkInstance.on('click', params => {
-        if (params.nodes.length > 0) {
-          const selectedNodeId = params.nodes[0];
-          filterReportTableByNode(selectedNodeId);
+      let matchCount = 0;
+      let searchToken = String(nodeId).trim().toLowerCase();
+
+      if (nodeMeta.group === 'SelfTransferHub' && searchToken.startsWith('hub_self_')) {
+        searchToken = searchToken.replace('hub_self_', '');
+      }
+
+      rows.forEach(row => {
+        if (row.cells.length < 2) return;
+
+        const ref = (row.getAttribute('data-ref') || '').toLowerCase();
+        const sender = (row.getAttribute('data-sender') || '').toLowerCase();
+        const beneficiary = (row.getAttribute('data-beneficiary') || '').toLowerCase();
+
+        let isMatch = false;
+        if (nodeMeta.group === 'Transaction') {
+          isMatch = (ref === searchToken || searchToken.includes(ref) || ref.includes(searchToken));
+        } else if (nodeMeta.group === 'SelfTransferHub') {
+          isMatch = (sender === searchToken && beneficiary === searchToken);
         } else {
-          resetTableFilters();
+          isMatch = (sender === searchToken || beneficiary === searchToken);
+        }
+
+        if (isMatch) {
+          row.classList.remove('hidden-row');
+          matchCount++;
+        } else {
+          row.classList.add('hidden-row');
         }
       });
+
+      indicator.textContent = `Filtered by: ${nodeMeta.label || nodeId} (${matchCount} records)`;
+      indicator.style.display = 'inline-block';
       
-      networkInstance.on('doubleClick', params => {
-        if (params.nodes.length > 0) networkInstance.focus(params.nodes[0], { scale: 2, animation: { duration: 400 } });
+      if (!tablePanelExpanded) {
+        toggleReportTablePanel();
+      }
+    }
+
+    function resetTableFilters() {
+      const rows = document.querySelectorAll('#tableReportRows tr');
+      rows.forEach(row => row.classList.remove('hidden-row'));
+      const indicator = document.getElementById('tableFilterIndicator');
+      if (indicator) {
+        indicator.style.display = 'none';
+        indicator.textContent = '';
+      }
+    }
+
+    function fitNetworkView() {
+      networkInstance?.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+    }
+
+    function togglePhysics() {
+      if (!networkInstance) return;
+      physicsEnabled = !physicsEnabled;
+      networkInstance.setOptions({ physics: { enabled: physicsEnabled } });
+      syncPhysicsButton();
+    }
+
+    function syncPhysicsButton() {
+      document.getElementById('physicsLabel').textContent = physicsEnabled ? 'Physics' : 'Frozen';
+    }
+
+    function clearNetworkCanvas() {
+      if (networkInstance) { networkInstance.destroy(); networkInstance = null; }
+      nodeTooltipMap = {};
+      document.getElementById('canvasEmptyState').style.display = 'flex';
+      setToolbarVisible(false);
+      document.getElementById('graphStatsBar').classList.add('hidden');
+      document.getElementById('tableReportRows').innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No dataset queried. Run visualization logic.</td></tr>`;
+      resetTableFilters();
+      populateBranchFilterOptions([]);
+      populateTransactionTypeFilterOptions([]);
+      showToast('Canvas cleared.');
+    }
+
+    function setToolbarVisible(visible) {
+      document.getElementById('canvasToolbar').style.display = visible ? 'flex' : 'none';
+    }
+
+    function setGraphStats(nodes, edges, txns) {
+      document.getElementById('statNodes').textContent = nodes;
+      document.getElementById('statEdges').textContent = edges;
+      document.getElementById('statTxns').textContent = txns;
+      document.getElementById('graphStatsBar').classList.remove('hidden');
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').textContent = message;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // =========================================================================
+    // INITIALIZATION LOGIC FOR INTERACTIVE DRAGGABLE RESIZE ARRAYS
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('tableReportPanel');
+      const handle = document.getElementById('tableReportHeaderHandle');
+
+      let isDraggingPanel = false;
+      let startPanelY, startPanelHeight;
+
+      handle.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.classList.contains('close-inspector')) return;
+        isDraggingPanel = true;
+        startPanelY = e.clientY;
+        startPanelHeight = parseInt(document.defaultView.getComputedStyle(panel).height, 10);
+        document.addEventListener('mousemove', handlePanelResize);
+        document.addEventListener('mouseup', stopPanelInteraction);
+        e.preventDefault();
       });
 
-      setToolbarVisible(true);
-      showToast(`Loaded ${visNodes.length} nodes · ${txnCount} transactions`);
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to render graph.');
-    } finally {
-      overlay.style.display = 'none';
-    }
-  }
-
-  // remaining presentation and table core handlers untouched for dependency tree stability...
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, ch => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[ch]));
-  }
-
-  function populateReportTable(dataArray) {
-    const tbody = document.getElementById('tableReportRows');
-    if (!dataArray || dataArray.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No results match the specified criteria.</td></tr>`;
-      return;
-    }
-
-    let rowsHtml = '';
-    dataArray.forEach(row => {
-      const refNumber = row.referenceNumber || row.ReferenceNumber || row.refNumber || row.RefNumber || row.id || row.Id || 'N/A';
-      const txnDate = row.date || row.Date || row.transactionDate || row.TransactionDate || 'N/A';
-      const txnType = row.type || row.Type || row.transactionType || row.TransactionType || 'N/A';
-      const senderName = row.senderName || row.SenderName || row.accountName || row.AccountName || 'N/A';
-      const senderAcc = row.senderAccount || row.SenderAccount || row.accountNumber || row.AccountNumber || 'N/A';
-      const beneficiaryName = row.beneficiaryName || row.BeneficiaryName || 'N/A';
-      const beneficiaryAcc = row.beneficiaryAccount || row.BeneficiaryAccount || 'N/A';
-      const rawBranchId = row.branchId || row.BranchId || row.branchReference || row.BranchReference || '';
-      const branch = branchNameLookup[rawBranchId] || rawBranchId || 'N/A';
-      const amount = row.amount || row.Amount || '0.00';
-
-      rowsHtml += `<tr data-ref="${escapeHtml(refNumber)}" data-sender="${escapeHtml(senderAcc)}" data-beneficiary="${escapeHtml(beneficiaryAcc)}">
-        <td style="font-family:monospace;color:#fbbf24;">${escapeHtml(refNumber)}</td>
-        <td>${escapeHtml(txnDate)}</td>
-        <td><span class="pill role" style="background:#1e293b;color:#cbd5e1;">${escapeHtml(txnType)}</span></td>
-        <td>${escapeHtml(senderName)}</td>
-        <td style="font-family:monospace;">${escapeHtml(senderAcc)}</td>
-        <td>${escapeHtml(beneficiaryName)}</td>
-        <td style="font-family:monospace;">${escapeHtml(beneficiaryAcc)}</td>
-        <td>${escapeHtml(branch)}</td>
-        <td style="text-align:right;font-weight:600;color:#10b981;">${escapeHtml(amount)}</td>
-      </tr>`;
-    });
-    tbody.innerHTML = rowsHtml;
-  }
-
-  function filterReportTableByNode(nodeId) {
-    const nodeMeta = nodeTooltipMap[nodeId];
-    if (!nodeMeta) return;
-
-    const rows = document.querySelectorAll('#tableReportRows tr');
-    const indicator = document.getElementById('tableFilterIndicator');
-    
-    let matchCount = 0;
-    const searchToken = String(nodeId).trim().toLowerCase();
-
-    rows.forEach(row => {
-      if (row.cells.length < 2) return;
-
-      const ref = (row.getAttribute('data-ref') || '').toLowerCase();
-      const sender = (row.getAttribute('data-sender') || '').toLowerCase();
-      const beneficiary = (row.getAttribute('data-beneficiary') || '').toLowerCase();
-
-      let isMatch = false;
-      if (nodeMeta.group === 'Transaction') {
-        isMatch = (ref === searchToken || searchToken.includes(ref) || ref.includes(searchToken));
-      } else {
-        isMatch = (sender === searchToken || beneficiary === searchToken);
+      function handlePanelResize(e) {
+        if (!isDraggingPanel) return;
+        const deltaY = startPanelY - e.clientY; 
+        panel.style.height = `${startPanelHeight + deltaY}px`;
       }
 
-      if (isMatch) {
-        row.classList.remove('hidden-row');
-        matchCount++;
-      } else {
-        row.classList.add('hidden-row');
+      function stopPanelInteraction() {
+        isDraggingPanel = false;
+        document.removeEventListener('mousemove', handlePanelResize);
+        document.removeEventListener('mouseup', stopPanelInteraction);
       }
+
+      const table = document.getElementById('resizableReportTable');
+      const cols = table.querySelectorAll('thead th');
+
+      cols.forEach((col) => {
+        const resizer = document.createElement('div');
+        resizer.classList.add('col-resize-handle');
+        col.appendChild(resizer);
+
+        let isResizingCol = false;
+        let startX, startWidth;
+
+        resizer.addEventListener('mousedown', (e) => {
+          isResizingCol = true;
+          resizer.classList.add('resizing');
+          startX = e.clientX;
+          startWidth = col.offsetWidth;
+
+          e.stopPropagation();
+          e.preventDefault();
+
+          const mouseMoveHandler = (moveEvent) => {
+            if (!isResizingCol) return;
+            const currentDeltaX = moveEvent.clientX - startX;
+            const updatedWidth = Math.max(45, startWidth + currentDeltaX);
+            col.style.width = `${updatedWidth}px`;
+          };
+
+          const mouseUpHandler = () => {
+            isResizingCol = false;
+            resizer.classList.remove('resizing');
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+          };
+
+          document.addEventListener('mousemove', mouseMoveHandler);
+          document.addEventListener('mouseup', mouseUpHandler);
+        });
+      });
     });
-
-    indicator.textContent = `Filtered by: ${nodeMeta.label || nodeId} (${matchCount} records)`;
-    indicator.style.display = 'inline-block';
-    
-    if (!tablePanelExpanded) {
-      toggleReportTablePanel();
-    }
-  }
-
-  function resetTableFilters() {
-    const rows = document.querySelectorAll('#tableReportRows tr');
-    rows.forEach(row => row.classList.remove('hidden-row'));
-    const indicator = document.getElementById('tableFilterIndicator');
-    if (indicator) {
-      indicator.style.display = 'none';
-      indicator.textContent = '';
-    }
-  }
-
-  function fitNetworkView() {
-    networkInstance?.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
-  }
-
-  // configuration flags mapping functions
-  function togglePhysics() {
-    if (!networkInstance) return;
-    physicsEnabled = !physicsEnabled;
-    networkInstance.setOptions({ physics: { enabled: physicsEnabled } });
-    syncPhysicsButton();
-  }
-
-  function syncPhysicsButton() {
-    document.getElementById('physicsLabel').textContent = physicsEnabled ? 'Physics' : 'Frozen';
-  }
-
-  function clearNetworkCanvas() {
-    if (networkInstance) { networkInstance.destroy(); networkInstance = null; }
-    nodeTooltipMap = {};
-    document.getElementById('canvasEmptyState').style.display = 'flex';
-    setToolbarVisible(false);
-    document.getElementById('graphStatsBar').classList.add('hidden');
-    document.getElementById('tableReportRows').innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No dataset queried. Run visualization logic.</td></tr>`;
-    resetTableFilters();
-    showToast('Canvas cleared.');
-  }
-
-  function setToolbarVisible(visible) {
-    document.getElementById('canvasToolbar').style.display = visible ? 'flex' : 'none';
-  }
-
-  function setGraphStats(nodes, edges, txns) {
-    document.getElementById('statNodes').textContent = nodes;
-    document.getElementById('statEdges').textContent = edges;
-    document.getElementById('statTxns').textContent = txns;
-    document.getElementById('graphStatsBar').classList.remove('hidden');
-  }
-
-  function showToast(message) {
-    clearTimeout(toastTimer);
-    const toast = document.getElementById('toastNotification');
-    document.getElementById('toastMessage').textContent = message;
-    toast.classList.add('show');
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
-  }
-
-  loadBranchOptions();
-  loadTransactionTypeOptions();
-</script>
+  </script>
 </body>
 </html>
