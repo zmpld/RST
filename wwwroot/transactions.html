@@ -6,7 +6,7 @@
   <title>LedgerLink Analytics - Transaction Flow</title>
   <link rel="stylesheet" href="/css/app.css">
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <style>
+<style>
     .view-container {
       display: flex;
       flex-direction: column;
@@ -274,6 +274,199 @@
       scrollbar-width: thin;
       scrollbar-color: #1e293b #0f172a;
     }
+
+    /* =========================================================================
+       THEMED TRANSACTION ACCORDION PANELS
+       ========================================================================= */
+    .txn-accordion-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+    }
+    .txn-accordion-card:hover {
+      border-color: #3b82f6;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-card {
+      background: #ffffff;
+      border-color: #cbd5e1;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-card:hover {
+      border-color: #3b82f6;
+    }
+    .txn-accordion-trigger {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+      border: none;
+      color: #f8fafc;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      user-select: none;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-trigger {
+      color: #0f172a;
+    }
+    .txn-accordion-chevron {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #64748b;
+    }
+    .txn-accordion-card.expanded .txn-accordion-chevron {
+      transform: rotate(180deg);
+      color: #3b82f6;
+    }
+    .txn-accordion-content {
+      display: none;
+      padding: 0 0.75rem 0.75rem 0.75rem;
+      border-top: 1px solid #1e293b;
+      background: #0b0f17;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-content {
+      border-top-color: #e2e8f0;
+      background: #f8fafc;
+      color: #334155;
+    }
+    .txn-accordion-card.expanded .txn-accordion-content {
+      display: block;
+    }
+    .txn-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .txn-details-label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    .txn-details-value {
+      font-family: monospace;
+      color: #e2e8f0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .view-container.light-mode ~ .sidebar .txn-details-value {
+      color: #0f172a;
+    }
+
+    /* =========================================================================
+       MODIFIED SIDEBAR SYSTEM TO ALLOW FULL-HEIGHT ACCORDION COVERAGE
+       ========================================================================= */
+    .sidebar {
+      position: relative; /* Anchor the absolute-positioned full tab */
+    }
+    
+    .full-height-accordion-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 60px); /* Leaves space for footer visualization actionable button area */
+      background: #0b0f17;
+      border-right: 1px solid #1e293b;
+      display: none;
+      flex-direction: column;
+      z-index: 50;
+      padding: 0.75rem;
+      box-sizing: border-box;
+      
+      /* Injected Scroll Utilities */
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #1e293b #0b0f17;
+    }
+    
+    /* Custom Scrollbar Engines (Webkit Defaults for Dark Mode) */
+    .full-height-accordion-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+    .full-height-accordion-panel::-webkit-scrollbar-track {
+      background: #0b0f17;
+    }
+    .full-height-accordion-panel::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    .full-height-accordion-panel::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+    
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel {
+      background: #f1f5f9;
+      border-right-color: #cbd5e1;
+      
+      /* Light Mode Fallbacks (Firefox) */
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+
+    /* Light Mode Custom Scrollbar Engines Override (Webkit) */
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+    }
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+
+    .accordion-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1e293b;
+      margin-bottom: 0.75rem;
+    }
+
+    .view-container.light-mode ~ .sidebar .accordion-panel-header {
+      border-bottom-color: #cbd5e1;
+    }
+
+    .btn-close-accordion {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: color 0.15s ease;
+    }
+    .btn-close-accordion:hover {
+      color: #ef4444;
+    }
+    
+    .view-container.light-mode ~ .sidebar .btn-close-accordion {
+      color: #475569;
+    }
+    .view-container.light-mode ~ .sidebar .btn-close-accordion:hover {
+      color: #ef4444;
+    }
+
+    .table-report-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    /* This maps them beautifully into your existing CSS architecture */
+    .table-report-controls .btn-toolbar {
+      padding: 0.35rem 0.75rem;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -354,7 +547,7 @@
           </div>
         </div>
 
-        <div class="sidebar-section grow">
+        <div class="sidebar-section grow" style="display: flex; flex-direction: column; overflow: hidden;">
           <div class="header-action-row">
             <div style="display:flex;align-items:center;gap:0.5rem;">
               <span class="section-label" style="margin:0">2. Select Accounts</span>
@@ -368,9 +561,17 @@
               </label>
             </div>
           </div>
-          <div id="searchResultsContainer" class="results-box plain">
+          <div id="searchResultsContainer" class="results-box plain" style="flex-grow: 1; overflow-y: auto;">
             <div class="empty-state">Search for accounts above to see results.</div>
           </div>
+        </div>
+
+        <div id="accordionInspectionSection" class="full-height-accordion-panel">
+          <div class="accordion-panel-header">
+            <p class="section-label" style="margin:0;" id="accordionSectionTitle">Selected Node Details</p>
+            <button class="btn-close-accordion" title="Close details panel" onclick="hideAccordionInspector()">×</button>
+          </div>
+          <div id="transactionAccordionContainer" style="overflow-y:auto; flex-grow:1; padding-right:2px;"></div>
         </div>
 
         <div class="sidebar-footer">
@@ -398,6 +599,9 @@
             <button class="btn-toolbar" onclick="fitNetworkView()">Fit View</button>
             <button class="btn-toolbar" onclick="togglePhysics()" id="btnPhysics"><span id="physicsLabel">Physics</span></button>
             <button class="btn-toolbar" onclick="toggleReportTablePanel()" id="btnToggleTable">Show Data Table</button>
+            
+            <button class="btn-toolbar" onclick="toggleGraphEdgesVisibility()" id="btnToggleEdges">Hide Edges</button>
+            
             <button class="btn-toolbar danger" onclick="clearNetworkCanvas()">Clear</button>
             
             <div class="toolbar-toggle-wrapper" style="margin-right:5px;">
@@ -453,6 +657,16 @@
               <span class="section-label" style="margin:0;color:#94a3b8;" id="tablePanelMainTitle">Granular Transaction Record Audit</span>
               <span id="tableFilterIndicator" style="font-size:11px; color:#e2e8f0; background:#1e293b; padding:2px 6px; border-radius:4px; display:none;"></span>
             </div>
+            
+            <div class="table-report-controls" style="display: flex; gap: 0.5rem; align-items: center; margin-left: auto; margin-right: 1rem;">
+              <button type="button" class="btn-toolbar" style="padding: 0.35rem 0.75rem; font-size: 11px; border-radius: 4px; cursor: pointer;" onclick="exportReport('csv')">
+                Export CSV
+              </button>
+              <button type="button" class="btn-toolbar" style="padding: 0.35rem 0.75rem; font-size: 11px; border-radius: 4px; cursor: pointer;" onclick="exportReport('pdf')">
+                Export PDF
+              </button>
+            </div>
+
             <button class="close-inspector" style="position:static;padding:0;line-height:1;background:transparent;border:none;color:#94a3b8;font-size:20px;cursor:pointer;" onclick="toggleReportTablePanel()">×</button>
           </div>
           <div class="table-scroll-frame">
@@ -484,13 +698,17 @@
 
   <div id="toastNotification" class="toast"><span id="toastMessage">Done.</span></div>
 
-  <script>
+<script>
     let networkInstance = null;
     let physicsEnabled = true;
     let filtersExpanded = true;
     let tablePanelExpanded = false;
+    let showEdgesState = true; // State to track graph line visualization visibility
     let nodeTooltipMap = {};
+    let currentRawTableData = []; // Cached array for structural data binding lookups
+    let globalCachedEdges = [];   // Backup holder to toggle edges on/off instantly
     let toastTimer = null;
+    let currentActiveAccountsCache = []; // Global tracker variable for account caching
 
     const GROUP_COLORS = {
       Sender: '#4f46e5', SelfTransferHub: '#d946ef', Beneficiary: '#10b981', 
@@ -514,6 +732,50 @@
         panel.classList.remove('active');
         btn.textContent = 'Show Data Table';
       }
+    }
+
+    function exportReport(format) {
+      // 1. Gather your current active search filters from your input elements
+      const activeAccounts = getSelectedAccountsArray(); 
+      const startDate = document.getElementById('startDateInput')?.value || '';
+      const endDate = document.getElementById('endDateInput')?.value || '';
+      const minAmount = document.getElementById('minAmountInput')?.value || '';
+      const maxAmount = document.getElementById('maxAmountInput')?.value || '';
+      const branchId = document.getElementById('branchSelect')?.value || '';
+      const transactionType = document.getElementById('typeSelect')?.value || '';
+      const latestOnly = document.getElementById('latestOnlyCheckbox')?.checked || false;
+
+      if (!activeAccounts || activeAccounts.length === 0) {
+          alert("No active accounts selected to export.");
+          return;
+      }
+
+      // 2. Map target endpoint based on click selection
+      const endpoint = format === 'pdf' ? '/Transaction/DownloadPdf' : '/Transaction/DownloadCsv';
+      
+      // 3. Construct the query parameters string
+      const params = new URLSearchParams();
+      
+      // ASP.NET Core arrays match repeated keys: ?accounts=ACC1&accounts=ACC2
+      activeAccounts.forEach(acc => params.append('accounts', acc));
+      
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (minAmount) params.append('minAmount', minAmount);
+      if (maxAmount) params.append('maxAmount', maxAmount);
+      if (branchId) params.append('branchId', branchId);
+      if (transactionType) params.append('transactionType', transactionType);
+      if (latestOnly) params.append('latestOnly', latestOnly);
+
+      // 4. Force browser native stream download window download
+      window.location.href = `${endpoint}?${params.toString()}`;
+    }
+
+    function getSelectedAccountsArray() {
+        if (Array.isArray(currentActiveAccountsCache) && currentActiveAccountsCache.length > 0) {
+            return currentActiveAccountsCache;
+        }
+        return [];
     }
 
     function toggleCanvasTheme(toggleInput) {
@@ -702,11 +964,15 @@
       updateVisualizeButtonState();
     }
 
+    // FIXED: This function now populates currentActiveAccountsCache automatically on change
     function updateVisualizeButtonState() {
       const checked = document.querySelectorAll('.account-item-checkbox:checked');
       const total = document.querySelectorAll('.account-item-checkbox');
       const btn = document.getElementById('btnVisualize');
       const sa = document.getElementById('selectAllCheckbox');
+
+      // Sync checked items directly to the global cache array
+      currentActiveAccountsCache = Array.from(checked).map(input => input.value);
 
       document.getElementById('selectedCount').textContent = checked.length;
       document.getElementById('btnClearSel').classList.toggle('hidden', checked.length === 0);
@@ -745,6 +1011,7 @@
       const overlay = document.getElementById('canvasLoadingOverlay');
       overlay.style.display = 'flex';
       resetTableFilters();
+      hideAccordionInspector();
 
       try {
         const response = await fetch(`/Transaction/GetGraphData?${params}`);
@@ -755,8 +1022,8 @@
           return;
         }
 
-        const tableData = rawData.tableReportData || rawData.TableReportData || rawData.reportData || rawData.ReportData || [];
-        populateReportTable(tableData);
+        currentRawTableData = rawData.tableReportData || rawData.TableReportData || rawData.reportData || rawData.ReportData || [];
+        populateReportTable(currentRawTableData);
 
         const activeBranches = rawData.activeBranches || rawData.ActiveBranches || [];
         const activeTypes = rawData.activeTransactionTypes || rawData.ActiveTransactionTypes || [];
@@ -769,48 +1036,8 @@
           return;
         }
 
-      let nodesToRender = rawData.nodes || [];
+        let nodesToRender = rawData.nodes || [];
         let edgesToRender = rawData.edges || [];
-
-        if (nodesToRender.length === 0) {
-          document.getElementById('canvasEmptyState').style.display = 'flex';
-          if (networkInstance) networkInstance.destroy();
-          setToolbarVisible(false);
-          showToast('No canvas entities matched this criteria.');
-          return;
-        
-
-          const validEdgeIds = new Set();
-          const linkedAccountNodeIds = new Set();
-
-          edgesToRender.forEach(e => {
-            const fromId = e.from ?? e.From;
-            const toId = e.to ?? e.To;
-
-            if (matchedTxnNodeIds.has(fromId) || matchedTxnNodeIds.has(toId)) {
-              linkedAccountNodeIds.add(fromId);
-              linkedAccountNodeIds.add(toId);
-              validEdgeIds.add(e.id ?? e.Id);
-            }
-          });
-
-          nodesToRender = rawData.nodes.filter(n => {
-            const nid = n.id ?? n.Id;
-            const group = n.group ?? n.Group;
-            if (group === 'Transaction') return matchedTxnNodeIds.has(nid);
-            return linkedAccountNodeIds.has(nid);
-          });
-
-          edgesToRender = edgesToRender.filter(e => validEdgeIds.has(e.id ?? e.Id));
-        }
-
-        if (nodesToRender.length === 0) {
-          document.getElementById('canvasEmptyState').style.display = 'flex';
-          if (networkInstance) networkInstance.destroy();
-          setToolbarVisible(false);
-          showToast('No canvas entities matched this explicit Type criteria.');
-          return;
-        }
 
         document.getElementById('canvasEmptyState').style.display = 'none';
         nodeTooltipMap = {};
@@ -831,20 +1058,14 @@
           visNodes.push({ id, label, title: titleEl, group, shape: node.shape ?? node.Shape ?? 'dot' });
         });
 
-        // =========================================================================
-        // ENFORCE STRUCTURAL VECTOR PIPELINE: Native backend directions handle standard layout
-        // =========================================================================
-        const visEdges = []; const seenEdges = new Set();
-        
+        globalCachedEdges = [];
         edgesToRender.forEach((edge, i) => {
           let ef = String(edge.from ?? edge.From);
           let et = String(edge.to ?? edge.To);
           const edgeId = edge.id ?? edge.Id;
-          
-          // Generate an explicitly unique identifier to track layered sequential vectors separately
           const finalId = `edge_instance_${edgeId}_${i}`;
 
-          visEdges.push({
+          globalCachedEdges.push({
             id: finalId, 
             from: ef, 
             to: et,
@@ -879,9 +1100,12 @@
         };
 
         if (networkInstance) networkInstance.destroy();
+        
+        const activeEdgesSet = showEdgesState ? globalCachedEdges : [];
+        
         networkInstance = new vis.Network(
           document.getElementById('visualNetworkCanvas'),
-          { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
+          { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(activeEdgesSet) },
           options
         );
         physicsEnabled = true;
@@ -889,15 +1113,17 @@
 
         networkInstance.on('stabilizationIterationsDone', () => {
           networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
-          setGraphStats(visNodes.length, visEdges.length, txnCount);
+          setGraphStats(visNodes.length, activeEdgesSet.length, txnCount);
         });
         
         networkInstance.on('click', params => {
           if (params.nodes.length > 0) {
             const selectedNodeId = params.nodes[0];
             filterReportTableByNode(selectedNodeId);
+            generateAccordionInspector(selectedNodeId);
           } else {
             resetTableFilters();
+            hideAccordionInspector();
           }
         });
         
@@ -913,6 +1139,115 @@
       } finally {
         overlay.style.display = 'none';
       }
+    }
+
+    function toggleGraphEdgesVisibility() {
+      if (!networkInstance) return;
+      showEdgesState = !showEdgesState;
+      const btn = document.getElementById('btnToggleEdges');
+      
+      if (showEdgesState) {
+        networkInstance.setData({
+          nodes: networkInstance.body.data.nodes,
+          edges: new vis.DataSet(globalCachedEdges)
+        });
+        btn.textContent = 'Hide Edges';
+        showToast('Graph transaction link edges restored.');
+      } else {
+        networkInstance.setData({
+          nodes: networkInstance.body.data.nodes,
+          edges: new vis.DataSet([])
+        });
+        btn.textContent = 'Show Edges';
+        showToast('Graph link edges removed from view field.');
+      }
+      
+      const currentNodesCount = networkInstance.body.data.nodes.length;
+      const currentEdgesCount = showEdgesState ? globalCachedEdges.length : 0;
+      const txnCount = Object.values(nodeTooltipMap).filter(n => n.group === 'Transaction').length;
+      setGraphStats(currentNodesCount, currentEdgesCount, txnCount);
+    }
+
+    function generateAccordionInspector(nodeId) {
+      const nodeMeta = nodeTooltipMap[nodeId];
+      const container = document.getElementById('transactionAccordionContainer');
+      const section = document.getElementById('accordionInspectionSection');
+      const title = document.getElementById('accordionSectionTitle');
+      
+      if (!nodeMeta) { hideAccordionInspector(); return; }
+      
+      container.innerHTML = '';
+      section.style.display = 'flex'; 
+      
+      let searchToken = String(nodeId).trim().toLowerCase();
+      if (nodeMeta.group === 'SelfTransferHub' && searchToken.startsWith('hub_self_')) {
+        searchToken = searchToken.replace('hub_self_', '');
+      }
+      
+      const matchedRecords = currentRawTableData.filter(row => {
+        const ref = String(row.referenceNumber || row.ReferenceNumber || row.refNumber || row.RefNumber || row.id || row.Id || '').toLowerCase();
+        const sender = String(row.senderAccount || row.SenderAccount || row.accountNumber || row.AccountNumber || '').toLowerCase();
+        const beneficiary = String(row.beneficiaryAccount || row.BeneficiaryAccount || '').toLowerCase();
+        
+        if (nodeMeta.group === 'Transaction') {
+          return (ref === searchToken || searchToken.includes(ref) || ref.includes(searchToken));
+        } else if (nodeMeta.group === 'SelfTransferHub') {
+          return (sender === searchToken && beneficiary === searchToken);
+        } else {
+          return (sender === searchToken || beneficiary === searchToken);
+        }
+      });
+      
+      title.textContent = `${nodeMeta.group}: ${nodeMeta.label || nodeId}`;
+      
+      if (matchedRecords.length === 0) {
+        container.innerHTML = '<div style="color:#64748b; font-size:11px; padding:0.5rem; text-align:center;">No matching granular records.</div>';
+        return;
+      }
+      
+      matchedRecords.forEach((record, index) => {
+        const refNum = record.referenceNumber || record.ReferenceNumber || record.refNumber || record.RefNumber || 'N/A';
+        const date = record.date || record.Date || record.transactionDate || record.TransactionDate || 'N/A';
+        const type = record.type || record.Type || 'N/A';
+        const amount = record.amount || record.Amount || '0.00';
+        const sName = record.senderName || record.SenderName || 'N/A';
+        const sAcc = record.senderAccount || record.SenderAccount || 'N/A';
+        const bName = record.beneficiaryName || record.BeneficiaryName || 'N/A';
+        const bAcc = record.beneficiaryAccount || record.BeneficiaryAccount || 'N/A';
+        const branch = record.branchId || record.BranchId || 'N/A';
+        
+        const card = document.createElement('div');
+        card.className = `txn-accordion-card ${index === 0 ? 'expanded' : ''}`;
+        
+        card.innerHTML = `
+          <button class="txn-accordion-trigger" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-weight:600; font-family:monospace; color:#fbbf24;">${escapeHtml(refNum)}</span>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#10b981; font-weight:600;">${escapeHtml(amount)}</span>
+              <svg class="txn-accordion-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div class="txn-accordion-content">
+            <div class="txn-details-grid">
+              <span class="txn-details-label">Date:</span><span class="txn-details-value">${escapeHtml(date)}</span>
+              <span class="txn-details-label">Type:</span><span class="txn-details-value">${escapeHtml(type)}</span>
+              <span class="txn-details-label">Sender:</span><span class="txn-details-value" title="${escapeHtml(sName)}">${escapeHtml(sName)}</span>
+              <span class="txn-details-label">Snd Acc:</span><span class="txn-details-value">${escapeHtml(sAcc)}</span>
+              <span class="txn-details-label">Target:</span><span class="txn-details-value" title="${escapeHtml(bName)}">${escapeHtml(bName)}</span>
+              <span class="txn-details-label">Bnf Acc:</span><span class="txn-details-value">${escapeHtml(bAcc)}</span>
+              <span class="txn-details-label">Branch:</span><span class="txn-details-value">${escapeHtml(branch)}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function hideAccordionInspector() {
+      document.getElementById('accordionInspectionSection').style.display = 'none';
+      document.getElementById('transactionAccordionContainer').innerHTML = '';
     }
 
     function escapeHtml(value) {
@@ -1029,6 +1364,9 @@
     function clearNetworkCanvas() {
       if (networkInstance) { networkInstance.destroy(); networkInstance = null; }
       nodeTooltipMap = {};
+      currentRawTableData = [];
+      globalCachedEdges = [];
+      hideAccordionInspector();
       document.getElementById('canvasEmptyState').style.display = 'flex';
       setToolbarVisible(false);
       document.getElementById('graphStatsBar').classList.add('hidden');
@@ -1051,11 +1389,14 @@
     }
 
     function showToast(message) {
-      clearTimeout(toastTimer);
       const toast = document.getElementById('toastNotification');
-      document.getElementById('toastMessage').textContent = message;
-      toast.classList.add('show');
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 3000);
     }
 
     // =========================================================================
