@@ -29,29 +29,61 @@ namespace RelationshipVisualizer.Controllers
 
                 string searchTrim = query.Trim();
                 string wildCardSearch = $"%{searchTrim}%";
+                
+                // Split components to support accurate matching across spaces
+                string[] nameTokens = searchTrim.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-                var databaseMatches = await (from ct in _context.CustomerTransactions
-                                             join ca in _context.CustomerAccounts
-                                                 on ct.CustomerAccountId equals ca.CustomerAccountId into caGroup
-                                             from ca in caGroup.DefaultIfEmpty()
-                                             join ja in _context.JointAccounts
-                                                 on ca.CustomerAccountId equals ja.CustomerAccountId into jaGroup
-                                             from ja in jaGroup.DefaultIfEmpty()
-                                             join c in _context.Customers
-                                                 on ja.CustomerId equals c.CustomerId into cGroup
-                                             from c in cGroup.DefaultIfEmpty()
-                                             where ct.IsActive == true && c != null && c.IsActive == true && (
-                                                 EF.Functions.Like(c.CustomerFirstName, wildCardSearch) ||
-                                                 EF.Functions.Like(c.CustomerMiddleName, wildCardSearch) ||
-                                                 EF.Functions.Like(c.CustomerLastName, wildCardSearch)
-                                             )
-                                             select new
-                                             {
-                                                 AccountNumber = ca != null ? ca.AccountNumber : "N/A",
-                                                 FirstName = c.CustomerFirstName ?? "",
-                                                 MiddleName = c.CustomerMiddleName ?? "",
-                                                 LastName = c.CustomerLastName ?? ""
-                                             }).Distinct().ToListAsync();
+                var queryable = (from ct in _context.CustomerTransactions
+                                 join ca in _context.CustomerAccounts
+                                     on ct.CustomerAccountId equals ca.CustomerAccountId into caGroup
+                                 from ca in caGroup.DefaultIfEmpty()
+                                 join ja in _context.JointAccounts
+                                     on ca.CustomerAccountId equals ja.CustomerAccountId into jaGroup
+                                 from ja in jaGroup.DefaultIfEmpty()
+                                 join c in _context.Customers
+                                     on ja.CustomerId equals c.CustomerId into cGroup
+                                 from c in cGroup.DefaultIfEmpty()
+                                 where ct.IsActive == true && c != null && c.IsActive == true
+                                 select new { ca, c });
+
+                // FIXED: Explicit unrolled conditions instead of .All() to avoid EF core database translation exceptions
+                if (nameTokens.Length >= 2)
+                {
+                    string firstToken = nameTokens[0];
+                    string lastToken = nameTokens[nameTokens.Length - 1];
+
+                    queryable = queryable.Where(x =>
+                        // Exact combinations: First Name matches token 1 AND Last Name matches token 2 (e.g., "Anita Yap")
+                        (EF.Functions.Like(x.c.CustomerFirstName ?? "", $"%{firstToken}%") && EF.Functions.Like(x.c.CustomerLastName ?? "", $"%{lastToken}%")) ||
+                        // Inverse variations just in case (e.g., "Yap Anita")
+                        (EF.Functions.Like(x.c.CustomerLastName ?? "", $"%{firstToken}%") && EF.Functions.Like(x.c.CustomerFirstName ?? "", $"%{lastToken}%")) ||
+                        // Fallback fallback global matching
+                        EF.Functions.Like(x.c.CustomerFirstName ?? "", wildCardSearch) ||
+                        EF.Functions.Like(x.c.CustomerLastName ?? "", wildCardSearch)
+                    );
+                }
+                else
+                {
+                    // Regular baseline matching for single terms
+                    queryable = queryable.Where(x =>
+                        x.c.CustomerFirstName == searchTrim ||
+                        x.c.CustomerLastName == searchTrim ||
+                        EF.Functions.Like(x.c.CustomerFirstName ?? "", wildCardSearch) ||
+                        EF.Functions.Like(x.c.CustomerMiddleName ?? "", wildCardSearch) ||
+                        EF.Functions.Like(x.c.CustomerLastName ?? "", wildCardSearch)
+                    );
+                }
+
+                var databaseMatches = await queryable
+                    .Select(x => new
+                    {
+                        AccountNumber = x.ca != null ? x.ca.AccountNumber : "N/A",
+                        FirstName = x.c.CustomerFirstName ?? "",
+                        MiddleName = x.c.CustomerMiddleName ?? "",
+                        LastName = x.c.CustomerLastName ?? ""
+                    })
+                    .Distinct()
+                    .ToListAsync();
 
                 var uniqueResults = new List<object>();
                 var seenFullNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -124,7 +156,25 @@ namespace RelationshipVisualizer.Controllers
 
                 if (!string.IsNullOrWhiteSpace(transactionType))
                 {
-                    query = query.Where(t => t.TransactionType == transactionType);
+                    string targetFilter = transactionType.Trim();
+                    
+                    var matchedTypes = await _context.TransactionTypes
+                        .Where(tt => tt.Code == targetFilter || tt.TransactionTypeId.ToString() == targetFilter)
+                        .Select(tt => new { Code = tt.Code, IdString = tt.TransactionTypeId.ToString() })
+                        .ToListAsync();
+
+                    var validFilterKeys = matchedTypes.Select(m => m.IdString)
+                        .Concat(matchedTypes.Select(m => m.Code?.Trim()))
+                        .Where(val => !string.IsNullOrEmpty(val))
+                        .Distinct()
+                        .ToList();
+
+                    if (!validFilterKeys.Contains(targetFilter))
+                    {
+                        validFilterKeys.Add(targetFilter);
+                    }
+
+                    query = query.Where(t => validFilterKeys.Contains(t.TransactionType.Trim()));
                 }
 
                 query = from txn in query
@@ -206,7 +256,6 @@ namespace RelationshipVisualizer.Controllers
                 {
                     string refNo = txn.TransactionReferenceNumber ?? $"TXN_{txn.CustomerTransactionId}";
 
-                    // 1. SENDER
                     string senderId = "N/A";
                     string senderName = "Unknown Sender Account";
                     if (txn.CustomerAccountId.HasValue && accountIdentityMap.TryGetValue(txn.CustomerAccountId.Value, out var senderIdentity))
@@ -220,7 +269,6 @@ namespace RelationshipVisualizer.Controllers
                         if (holder != null) senderName = !string.IsNullOrEmpty(holder.AccountHolderCorporateName) ? holder.AccountHolderCorporateName : $"{holder.AccountHolderFirstName} {holder.AccountHolderLastName}".Trim();
                     }
 
-                    // 2. BENEFICIARY
                     string beneficiaryId = !string.IsNullOrWhiteSpace(txn.TransactionReferenceNumber) ? txn.TransactionReferenceNumber.Trim() : "N/A";
                     string beneficiaryName = "Unknown Beneficiary Target";
 
@@ -265,12 +313,10 @@ namespace RelationshipVisualizer.Controllers
                         amount = displayAmount.ToString("C", phCulture)
                     });
 
-                    // Tooltips
                     string senderTableTooltip = $@"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-family:sans-serif;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#4f46e5;'>ORIGINATING SENDER</th></tr><tr style='border-bottom:1px solid #f1f5f9;'><td style='padding:6px;color:#64748b;'>Account Number</td><td style='padding:6px;font-weight:bold;font-family:monospace;'>{senderId}</td></tr><tr><td style='padding:6px;color:#64748b;'>Customer Name</td><td style='padding:6px;font-weight:600;'>{senderName}</td></tr></table></div>";
                     string beneficiaryTableTooltip = $@"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-family:sans-serif;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#10b981;'>BENEFICIARY TARGET</th></tr><tr style='border-bottom:1px solid #f1f5f9;'><td style='padding:6px;color:#64748b;'>Account Number</td><td style='padding:6px;font-weight:bold;font-family:monospace;'>{beneficiaryId}</td></tr><tr><td style='padding:6px;color:#64748b;'>Customer Name</td><td style='padding:6px;font-weight:600;'>{beneficiaryName}</td></tr></table></div>";
                     string transactionNodeTooltip = $@"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-family:sans-serif;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#d97706;'>TRANSACTION LEDGER LOG</th></tr><tr style='border-bottom:1px solid #f1f5f9;'><td style='padding:6px;color:#64748b;'>Reference ID</td><td style='padding:6px;font-weight:bold;font-family:monospace;color:#b45309;'>{refNo}</td></tr><tr style='border-bottom:1px solid #f1f5f9;'><td style='padding:6px;color:#64748b;'>Execution Date</td><td style='padding:6px;'>{txn.TransactionDate?.ToString("yyyy-MM-dd") ?? "N/A"}</td></tr><tr style='border-bottom:1px solid #f1f5f9;'><td style='padding:6px;color:#64748b;'>Type</td><td style='padding:6px;font-weight:600;'>{resolvedTxnTypeName}</td></tr><tr><td style='padding:6px;color:#64748b;'>Amount Settled</td><td style='padding:6px;font-weight:bold;color:#16a34a;'>{displayAmount.ToString("C", phCulture)}</td></tr></table></div>";
 
-                    // Base account mapping structures
                     if (!graphData.Nodes.Any(n => n.Id == senderId))
                     {
                         graphData.Nodes.Add(new TransactionGraphNode { Id = senderId, Label = senderName, Group = "Sender", Title = senderTableTooltip });
@@ -282,14 +328,12 @@ namespace RelationshipVisualizer.Controllers
                         renderedAccountLabels[beneficiaryId] = beneficiaryName;
                     }
 
-                    // --- DETECT & HANDLE SELF-TRANSFERS VIA HUB NODES ---
                     bool isSelfTransfer = !string.Equals(senderId, "N/A") && string.Equals(senderId, beneficiaryId, StringComparison.OrdinalIgnoreCase);
 
                     if (isSelfTransfer)
                     {
                         string clusterHubNodeId = $"HUB_SELF_{senderId}";
 
-                        // Generate the master cluster node for this specific account if it doesn't exist yet
                         if (!graphData.Nodes.Any(n => n.Id == clusterHubNodeId))
                         {
                             string hubTooltip = $@"<div style='padding:6px;min-width:200px;'><b style='color:#6366f1;'>Self-Transfer Hub</b><br/><span style='font-size:11px;color:#64748b;'>Account: {senderId}</span></div>";
@@ -303,7 +347,6 @@ namespace RelationshipVisualizer.Controllers
                             });
                         }
 
-                        // Attach the specific transaction ledger bubble node onto the hub element
                         graphData.Nodes.Add(new TransactionGraphNode
                         {
                             Id = txnNodeId,
@@ -313,13 +356,11 @@ namespace RelationshipVisualizer.Controllers
                             TransactionType = resolvedTxnTypeName 
                         });
 
-                        // FIXED DIRECTION: Core Sender Account -> Transaction Node -> Self-Transfer Hub Node
                         graphData.Edges.Add(new TransactionGraphEdge { Id = $"{txn.CustomerTransactionId}_Self_Src", From = senderId, To = txnNodeId, Label = "" });
                         graphData.Edges.Add(new TransactionGraphEdge { Id = $"{txn.CustomerTransactionId}_Self_Hub", From = txnNodeId, To = clusterHubNodeId, Label = "Internal Loop" });
                     }
                     else
                     {
-                        // Standard handling for ordinary Account-to-Account movements
                         graphData.Nodes.Add(new TransactionGraphNode
                         {
                             Id = txnNodeId,
@@ -334,7 +375,6 @@ namespace RelationshipVisualizer.Controllers
                     }
                 }
 
-                // Joint accounts structural visualization checks
                 var activeCanvasAccountNumbers = new HashSet<string>(renderedAccountLabels.Keys, StringComparer.OrdinalIgnoreCase);
                 var customerGroupings = accountIdentityList
                     .Where(identity => identity.CustomerId != 0 && activeCanvasAccountNumbers.Contains(identity.AccountNumber))
