@@ -137,7 +137,7 @@ namespace RelationshipVisualizer.Controllers
                 {
                     string senderTableTooltip = $"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#4f46e5;'>ORIGINATING SENDER</th></tr><tr><td style='padding:6px;color:#64748b;'>Account</td><td>{item.SenderAccount}</td></tr><tr><td style='padding:6px;color:#64748b;'>Name</td><td>{item.SenderName}</td></tr></table></div>";
                     string beneficiaryTableTooltip = $"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#10b981;'>BENEFICIARY TARGET</th></tr><tr><td style='padding:6px;color:#64748b;'>Account</td><td>{item.BeneficiaryAccount}</td></tr><tr><td style='padding:6px;color:#64748b;'>Name</td><td>{item.BeneficiaryName}</td></tr></table></div>";
-                    string transactionNodeTooltip = $"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#d97706;'>TRANSACTION LEDGER LOG</th></tr><tr><td style='padding:6px;color:#64748b;'>ID</td><td>{item.ReferenceNumber}</td></tr><tr><td style='padding:6px;color:#64748b;'>Amount</td><td>{item.RawAmount.ToString("C", phCulture)}</td></tr></table></div>";
+                    string transactionNodeTooltip = $"<div style='padding:6px;min-width:260px;'><table style='width:100%;border-collapse:collapse;font-size:11px;'><tr style='background-color:#f8fafc;border-bottom:2px solid #e2e8f0;'><th colspan='2' style='padding:6px;text-align:left;color:#d97706;'>TRANSACTION LOG</th></tr><tr><td style='padding:6px;color:#64748b;'>ID</td><td>{item.ReferenceNumber}</td></tr><tr><td style='padding:6px;color:#64748b;'>Amount</td><td>{item.RawAmount.ToString("C", phCulture)}</td></tr></table></div>";
 
                     if (!graphData.Nodes.Any(n => n.Id == item.SenderAccount))
                     {
@@ -275,7 +275,7 @@ namespace RelationshipVisualizer.Controllers
 
                     page.Header().Column(col =>
                     {
-                        col.Item().Text("Transaction Ledger Report Analysis").FontSize(18).Bold().FontColor("#0f172a");
+                        col.Item().Text("Transaction Report Analysis").FontSize(18).Bold().FontColor("#0f172a");
                         col.Item().PaddingBottom(10).Text($"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm:ss}").FontSize(9).FontColor(Colors.Grey.Lighten1);
                     });
 

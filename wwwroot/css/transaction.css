@@ -1,0 +1,474 @@
+    .view-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      background: #080b11;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    
+    /* light mode */
+    .view-container.light-mode {
+      background: #f1f5f9;
+    }
+    
+    .canvas-toolbar {
+      display: none; /* Controlled dynamically by script */
+    }
+
+    .view-container.light-mode .canvas-toolbar {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode .btn-toolbar {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+    
+    .view-container.light-mode .btn-toolbar:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    
+    .view-container.light-mode .canvas-legend {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+    
+    .view-container.light-mode .legend-header {
+      color: #0f172a !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+    
+    .view-container.light-mode .legend-item span {
+      color: #334155 !important;
+      font-weight: 500;
+    }
+    
+    .view-container.light-mode .canvas-empty {
+      color: #475569;
+    }
+    
+    .view-container.light-mode .toolbar-toggle-wrapper {
+      color: #334155;
+      border-left-color: #cbd5e1;
+    }
+
+    /* Light Mode Table View Override */
+    .view-container.light-mode + .table-view-panel,
+    .view-container.light-mode ~ #tableReportPanel {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .panel-header-actions {
+      background: #f8fafc;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .report-grid-table th {
+      background: #f1f5f9;
+      color: #475569;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .report-grid-table td {
+      color: #334155;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .view-container.light-mode ~ #tableReportPanel .report-grid-table tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Base Layout System Structuring */
+    .canvas-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* =========================================================================
+       FIXED ATTACHMENT WITH DRAG/RESIZE MATRIX INTERACTION
+       ========================================================================= */
+    .table-view-panel {
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      width: 100%;
+      height: 280px;
+      min-height: 120px;
+      max-height: 80%;
+      background: #0b0f17;
+      border-top: 2px solid #1e293b;
+      box-shadow: 0 -10px 25px -5px rgba(0,0,0,0.4);
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      overflow: hidden;
+    }
+    .table-view-panel.active {
+      display: flex;
+    }
+    .panel-header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 1rem;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      cursor: ns-resize;
+      user-select: none;
+    }
+    .table-scroll-frame {
+      overflow-y: auto;
+      overflow-x: auto;
+      flex-grow: 1;
+    }
+    
+    /* Strict Width Column Fit Alignment Rules */
+    .report-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: left;
+      table-layout: fixed;
+    }
+    .report-grid-table th {
+      background: #111827;
+      color: #94a3b8;
+      padding: 8px 6px;
+      position: sticky;
+      top: 0;
+      border-bottom: 2px solid #1e293b;
+      font-weight: 600;
+      z-index: 5;
+      text-overflow: ellipsis;
+      overflow: visible;
+      white-space: nowrap;
+    }
+    
+    /* Interactive Column Resize Gripper Handles */
+    .col-resize-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      z-index: 10;
+      transition: background 0.1s ease;
+    }
+    .col-resize-handle:hover,
+    .col-resize-handle.resizing {
+      background: #06b6d4;
+    }
+
+    .report-grid-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    
+    /* Configured Column Standard Ratio Blueprints */
+    .report-grid-table th:nth-child(1) { width: 80px; }
+    .report-grid-table th:nth-child(2) { width: 80px; }
+    .report-grid-table th:nth-child(3) { width: 90px; }
+    .report-grid-table th:nth-child(4) { width: 150px; }
+    .report-grid-table th:nth-child(5) { width: 90px; }
+    .report-grid-table th:nth-child(6) { width: 140px; }
+    .report-grid-table th:nth-child(7) { width: 100px; }
+    .report-grid-table th:nth-child(8) { width: 100px; }
+    .report-grid-table th:nth-child(9) { width: 90px; }
+
+    .report-grid-table tr:hover {
+      background: #1e293b;
+    }
+    .report-grid-table tr.hidden-row {
+      display: none !important;
+    }
+
+    /* Unified Dark Scrollbars */
+    .table-scroll-frame::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .table-scroll-frame::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .table-scroll-frame::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    .table-scroll-frame::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+    .table-scroll-frame {
+      scrollbar-width: thin;
+      scrollbar-color: #1e293b #0f172a;
+    }
+
+    .select-dropdown {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      color: #f8fafc;
+      padding: 0.4rem;
+      border-radius: 4px;
+      font-size: 13px;
+      outline: none;
+    }
+    .select-dropdown:focus {
+      border-color: #3b82f6;
+    }
+    
+    .toolbar-toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding-left: 0.75rem;
+      border-left: 1px solid #1e293b;
+    }
+    .toolbar-toggle-wrapper svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      flex-shrink: 0;
+    }
+    
+    #searchResultsContainer::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    #searchResultsContainer::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 4px;
+    }
+    #searchResultsContainer::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+      border: 1px solid #0f172a;
+    }
+    #searchResultsContainer::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+    #searchResultsContainer {
+      scrollbar-width: thin;
+      scrollbar-color: #1e293b #0f172a;
+    }
+
+    /* =========================================================================
+       THEMED TRANSACTION ACCORDION PANELS
+       ========================================================================= */
+    .txn-accordion-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+    }
+    .txn-accordion-card:hover {
+      border-color: #3b82f6;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-card {
+      background: #ffffff;
+      border-color: #cbd5e1;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-card:hover {
+      border-color: #3b82f6;
+    }
+    .txn-accordion-trigger {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+      border: none;
+      color: #f8fafc;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      user-select: none;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-trigger {
+      color: #0f172a;
+    }
+    .txn-accordion-chevron {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #64748b;
+    }
+    .txn-accordion-card.expanded .txn-accordion-chevron {
+      transform: rotate(180deg);
+      color: #3b82f6;
+    }
+    .txn-accordion-content {
+      display: none;
+      padding: 0 0.75rem 0.75rem 0.75rem;
+      border-top: 1px solid #1e293b;
+      background: #0b0f17;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+    .view-container.light-mode ~ .sidebar .txn-accordion-content {
+      border-top-color: #e2e8f0;
+      background: #f8fafc;
+      color: #334155;
+    }
+    .txn-accordion-card.expanded .txn-accordion-content {
+      display: block;
+    }
+    .txn-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .txn-details-label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    .txn-details-value {
+      font-family: monospace;
+      color: #e2e8f0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .view-container.light-mode ~ .sidebar .txn-details-value {
+      color: #0f172a;
+    }
+
+    /* =========================================================================
+       MODIFIED SIDEBAR SYSTEM TO ALLOW FULL-HEIGHT ACCORDION COVERAGE
+       ========================================================================= */
+    .sidebar {
+      position: relative; /* Anchor the absolute-positioned full tab */
+    }
+    
+    .full-height-accordion-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 60px); /* Leaves space for footer visualization actionable button area */
+      background: #0b0f17;
+      border-right: 1px solid #1e293b;
+      display: none;
+      flex-direction: column;
+      z-index: 50;
+      padding: 0.75rem;
+      box-sizing: border-box;
+      
+      /* Injected Scroll Utilities */
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #1e293b #0b0f17;
+    }
+    
+    /* Custom Scrollbar Engines (Webkit Defaults for Dark Mode) */
+    .full-height-accordion-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+    .full-height-accordion-panel::-webkit-scrollbar-track {
+      background: #0b0f17;
+    }
+    .full-height-accordion-panel::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    .full-height-accordion-panel::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+    
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel {
+      background: #f1f5f9;
+      border-right-color: #cbd5e1;
+      
+      /* Light Mode Fallbacks (Firefox) */
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+
+    /* Light Mode Custom Scrollbar Engines Override (Webkit) */
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+    }
+    .view-container.light-mode ~ .sidebar .full-height-accordion-panel::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+
+    .accordion-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1e293b;
+      margin-bottom: 0.75rem;
+    }
+
+    .view-container.light-mode ~ .sidebar .accordion-panel-header {
+      border-bottom-color: #cbd5e1;
+    }
+
+    .btn-close-accordion {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: color 0.15s ease;
+    }
+    .btn-close-accordion:hover {
+      color: #ef4444;
+    }
+    
+    .view-container.light-mode ~ .sidebar .btn-close-accordion {
+      color: #475569;
+    }
+    .view-container.light-mode ~ .sidebar .btn-close-accordion:hover {
+      color: #ef4444;
+    }
+
+    .table-report-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    /* This maps them beautifully into your existing CSS architecture */
+    .table-report-controls .btn-toolbar {
+      padding: 0.35rem 0.75rem;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Layout rules for checkbox integrations in accordion headers */
+    .accordion-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .accordion-link-checkbox {
+      cursor: pointer;
+      accent-color: #fbbf24;
+      width: 14px;
+      height: 14px;
+      z-index: 10;
+    }
